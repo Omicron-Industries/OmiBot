@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:18
+    networks:
+      - bunny_bot_network
+    restart: unless-stopped
+    env_file: ".env"
+    volumes:
+      - ./postgresql:/var/lib/postgresql
+    ports:
+      - "${POSTGRES_PORT}:5432"
+  bunny_bot:
+    image: git.marinodev.com/drake/bunny_bot
+    networks:
+      - bunny_bot_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    env_file: ".env"
+    environment:
+      RUST_LOG: debug
+    volumes:
+      - ./logs/:/app/logs/
+
+networks:
+  bunny_bot_network:
+    driver: bridge

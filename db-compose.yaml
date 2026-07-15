@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    env_file: ".env"
+    volumes:
+      - ./postgresql:/var/lib/postgresql
+    ports:
+      - "${POSTGRES_PORT}:5432"
