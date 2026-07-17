@@ -4,19 +4,17 @@ use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 use sqlx::postgres::PgPoolOptions;
-use log::{error, info};
-use serenity::all::GuildId;
+use log::{error, info, logger};
+use serenity::all::{CreateAllowedMentions, CreateEmbed, CreateMessage, GuildId};
 use sqlx::{query, Pool, Postgres, QueryBuilder};
+use bunny_bot::BotState;
 use bunny_bot::cache::GuildCache;
+use bunny_bot::commands::help::help;
+use bunny_bot::commands::ping::ping;
 use bunny_bot::settings::{GuildSettings, DEFAULT_PREFIX};
+use bunny_bot::tags::tag;
 
-
-struct BotState {
-    db_pool: Pool<Postgres>,
-    guild_cache: GuildCache,
-}
-
-struct Bot {
+pub struct Bot {
     state: Arc<BotState>,
 }
 
@@ -38,11 +36,30 @@ impl EventHandler for Bot {
         if !msg.content.starts_with(prefix) { return }
 
         // matches prefix
-        let mut parts = msg.content.strip_prefix(prefix).unwrap().split_whitespace();
-        match parts.next() {
-            None => return,
-            Some("ping") => { if let Err(why) = msg.reply_ping(&ctx.http, "pong!").await { error!("Error sending ping: {:?}", why); } },
+        let content = msg.content.to_lowercase();
+        let content = content.trim_start_matches(prefix);
+        let (command, args) = match content.split_once(char::is_whitespace) {
+            Some((command, args)) => (command, args.trim()),
+            None => (content, ""),
+        };
+        let message: CreateMessage = match command {
+            "ping" => ping(args).await,
+            "tag" => tag(args, &msg, self.state.clone()).await,
+            "t" => tag(args, &msg, self.state.clone()).await,
+            "help" => help(args, &msg, self.state.clone()).await,
+
             _ => return
+        };
+
+        // let embed = CreateEmbed::new()
+        //     .title("Hello, World!")
+        //     .description("This is an embedded message created with Serenity.")
+        //     .color(0x00A0E0); // Sets a teal/blue color
+
+        let message = message.allowed_mentions(CreateAllowedMentions::new().replied_user(true)).reference_message(&msg);
+
+        if let Err(e) = msg.channel_id.send_message(&ctx.http, message).await {
+            error!("Error sending message: {:?}", e);
         }
 
     }
@@ -50,6 +67,7 @@ impl EventHandler for Bot {
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
     dotenvy::dotenv().expect("Expected a .env file!");
 
     let database_url = format!(
@@ -91,7 +109,7 @@ async fn main() {
         guild_cache
     });
 
-    let mut bot = Bot {
+    let bot = Bot {
         state: bot_state.clone(),
     };
 
