@@ -5,11 +5,13 @@ pub mod text;
 
 use std::any::Any;
 use std::error::Error;
+use std::fmt::format;
 use std::sync::Arc;
 use log::error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serenity::all::{Context, CreateEmbed, CreateMessage, Embed, GuildId, Message, UserId};
+use sqlx::error::DatabaseError;
 use sqlx::Error::RowNotFound;
 use sqlx::types::{chrono, Json};
 use crate::BotState;
@@ -20,6 +22,7 @@ use crate::tags::embed::EmbedTagContent;
 use crate::tags::script::{ScriptContext, ScriptEngine, ScriptTagContent};
 use crate::tags::TagKind::Script;
 use crate::tags::text::TextTagContent;
+use sqlx::postgres::PgDatabaseError;
 
 #[derive(sqlx::Type, Debug, Serialize, Deserialize)]
 #[sqlx(type_name = "tag_kind", rename_all = "lowercase")]
@@ -75,8 +78,13 @@ impl CreateTagModel {
     }
 }
 
+
+pub async fn fetch_tag(name: &str, gid: i64, state: Arc<BotState>) -> Result<Option<FetchTagModel>, sqlx::Error> {
+    sqlx::query_as!(FetchTagModel, r#"SELECT id, guild_id, owner_id, name, kind as "kind: TagKind", payload, t_created, t_updated, enabled FROM tags WHERE guild_id = $1 AND name = $2"#, gid, name).fetch_optional(&state.db_pool).await
+}
+
 pub async fn fetch_tag_resolved(name: &str, gid: i64, state: Arc<BotState>) -> Result<FetchTagModel, sqlx::Error> {
-    // sqlx::query_as!(Tag, r#"SELECT id, guild_id, owner_id, name, kind as "kind: TagKind", payload as "payload: Json<TagPayload>", t_created, t_updated, enabled FROM tags WHERE name = $1"#, name).fetch_one(&state.db_pool).await
+
     sqlx::query_as!(FetchTagModel, r#"
     SELECT
         COALESCE(target.id, source.id) AS "id!",
@@ -113,20 +121,62 @@ pub async fn tag(args: &str, msg: &Message, state: Arc<BotState>) -> CreateMessa
         // With args
         Some(("help", new_args)) => tag_help(get_prefix(msg.guild_id, state.clone()).await.as_str(), Some(new_args)),
         Some(("add", new_args)) => add_tag(new_args, msg, state).await,
+        Some(("alias", new_args)) => alias_tag(new_args, msg, state).await,
         Some((tag, new_args)) => resolve_tag(tag, Some(new_args), msg, state).await,
 
         // No args
         None => match args {
+            "add" => tag_add_help_msg(get_prefix(msg.guild_id, state.clone()).await.as_str()),
+            "alias" => tag_alias_help_msg(get_prefix(msg.guild_id, state.clone()).await.as_str()),
             "help" => tag_help(get_prefix(msg.guild_id, state.clone()).await.as_str(), None),
             _ => resolve_tag(args, None, msg, state).await
         },
     }
 }
 
+async fn alias_tag(args: &str, msg: &Message, state: Arc<BotState>) -> CreateMessage {
+    match args.split_once(char::is_whitespace) {
+        None => {
+            let prefix = get_prefix(msg.guild_id, state.clone()).await;
+            CreateMessage::new().content(format!("Expected an alias name and tag name! See `{prefix}t alias help` for usage"))
+        },
+        Some((alias, new_args)) => {
+            let tag = match new_args.split_once(char::is_whitespace) {
+                None => new_args,
+                Some((first, _)) => first
+            };
+
+            let source_tag = match fetch_tag(tag, i64::from(msg.guild_id.unwrap()), state.clone()).await {
+                Ok(fetched) => match fetched {
+                    Some(src_tag) => src_tag,
+                    None => return CreateMessage::new().content(format!("Tag **{}** does not exist!", tag))
+                },
+                Err(e) => {
+                    error!("Error when fetching source tag of alias: {}", e);
+                    return CreateMessage::new().content("Error reading source tag!")
+                },
+            };
+
+            let payload = AliasTagContent {
+                target_id: source_tag.id
+            };
+
+            create_tag(CreateTagModel::with_msg(msg, alias.into(), TagKind::Alias, TagPayload::Alias(payload)), state).await
+        }
+    }
+}
+
 async fn add_tag(args: &str, msg: &Message, state: Arc<BotState>) -> CreateMessage {
     match args.split_once(char::is_whitespace) {
-        None => CreateMessage::new().content("Expected a tag name!"),
+        None => {
+            let prefix = get_prefix(msg.guild_id, state.clone()).await;
+            CreateMessage::new().content(format!("Expected a tag name and content! See `{prefix}t add help` for usage"))
+        },
         Some((tag, content)) => {
+            if tag == "help" {
+                let prefix = get_prefix(msg.guild_id, state.clone()).await;
+                return tag_add_help_msg(&prefix);
+            }
             if !tag.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
                 return CreateMessage::new().content("Tag name must contain only letters, numbers, underscores (_), and hyphens (-).");
             }
@@ -139,6 +189,7 @@ async fn add_tag(args: &str, msg: &Message, state: Arc<BotState>) -> CreateMessa
                 };
                 return create_tag(CreateTagModel::with_msg(msg, tag.into(), Script, TagPayload::Script(payload)), state).await
             }
+            // TODO: Add embed support
 
             let payload = TextTagContent {
                 content: content.into()
@@ -160,6 +211,11 @@ async fn create_tag(tag: CreateTagModel, state: Arc<BotState>) -> CreateMessage 
     };
     match sqlx::query!(r#"INSERT INTO tags (guild_id, owner_id, name, kind, payload) VALUES ($1, $2, $3, $4, $5);"#, tag.guild_id, tag.owner_id, tag.name, tag.kind as TagKind, serialized_payload).execute(&state.db_pool).await {
         Err(e) => {
+            if let Some(db_err) = e.as_database_error() {
+                if db_err.is_unique_violation() {
+                    return CreateMessage::new().content(format!("Tag **{}** already exists!", tag.name))
+                }
+            }
             error!("Failed to create tag in db: {}", e);
             CreateMessage::new().content("Error creating tag in db.")
         },
@@ -298,6 +354,23 @@ To create a script tag, the content of the tag must be a multi-line JS code bloc
 
 The String `args` is made available at the start of the script, containing all message content after the tag name.
 For a full API reference, see [here](https://git.marinodev.com/drake/bunny_bot/api.md).
+    "#
+    ))
+}
+
+fn tag_add_help_msg(prefix: &str) -> CreateMessage {
+    CreateMessage::new().content(format!(r#"
+Creates a new tag.
+Usage: `{prefix}t add <name> <content>`
+Tags can store text, JS scripts, or embeds. Creating embed and JS script tags are more in-depth than simple text. For information about how these tags work, use `{prefix}tag help script` or `{prefix}tag help embed`
+    "#
+    ))
+}
+
+fn tag_alias_help_msg(prefix: &str) -> CreateMessage {
+    CreateMessage::new().content(format!(r#"
+Creates an alias for a tag.
+Usage: `{prefix}t alias <new_name> <existing_tag>`
     "#
     ))
 }
