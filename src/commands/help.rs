@@ -19,15 +19,15 @@ pub async fn help(args: &str, msg: &Message, state: Arc<BotState>) -> CreateMess
 pub fn help_msg(prefix: &str, msg: &Message) -> CreateMessage {
     CreateMessage::new().content(format!(r#"{}
 **Commands:**
-`{prefix}tag` (`{prefix}t`): Store and recall tags
 `{prefix}ping`
+`{prefix}tag` (`{prefix}t`): Store and recall tags
 `{prefix}eval`: Run sandboxed JS
 `{prefix}help`: Print this help
 **Admin Commands:**
 `{prefix}settings`: Edit server settings
+`{prefix}ban`: Ban a user from creating tags
 
 `{prefix}[Any command] help` will give additional information about each command.
-
     "#, if msg.guild_id.is_some() { format!("Server prefix: {}", prefix) } else { "".to_string() }
     ))
 }

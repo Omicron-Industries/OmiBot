@@ -6,7 +6,7 @@ use serenity::prelude::*;
 use sqlx::postgres::PgPoolOptions;
 use log::{error, info, logger};
 use serenity::all::{CreateAllowedMentions, CreateEmbed, CreateMessage, GuildId};
-use sqlx::{query, Pool, Postgres, QueryBuilder};
+use sqlx::{query, query_as, Pool, Postgres, QueryBuilder};
 use bunny_bot::BotState;
 use bunny_bot::cache::GuildCache;
 use bunny_bot::commands::help::help;
@@ -22,22 +22,49 @@ pub struct Bot {
 #[async_trait]
 impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
-        let guild_id = msg.guild_id.unwrap().get();
-
-        let mut prefix = DEFAULT_PREFIX;
-        let settings = self.state.guild_cache.settings.get(&GuildId::from(guild_id)).await;
-
-        if settings.is_none() {
-            self.state.guild_cache.settings.insert(GuildId::from(guild_id), GuildSettings::default()).await;
-            query!("INSERT INTO guilds_settings (guild_id) VALUES ($1)", guild_id as i64).execute(&self.state.db_pool).await.unwrap();
-        } else {
-            prefix = settings.unwrap().prefix;
-        }
-        if !msg.content.starts_with(prefix) { return }
+        let guild_id = match msg.guild_id {
+            Some(id) => id.get(),
+            None => {
+                let _ = msg.reply_ping(ctx.http, "Error when evaluating tag command. Message was either a DM or received outside of the gateway. Make sure you are requesting a tag in a server that has it. To see your own tags, run `%t list`".to_string()).await;
+                return;
+            }
+        };
+        
+        let settings = match self.state.guild_cache.settings.get(&GuildId::from(guild_id)).await {
+            Some(settings) => settings,
+            None => {
+                match query_as!(GuildSettings, "SELECT prefix FROM guilds_settings WHERE guild_id = $1", guild_id as i64).fetch_optional(&self.state.db_pool).await {
+                    Ok(Some(new_settings)) => new_settings,
+                    Ok(None) => {
+                        match query!("INSERT INTO guilds_settings (guild_id) VALUES ($1)", guild_id as i64).execute(&self.state.db_pool).await {
+                            Ok(_) => {
+                                let settings = GuildSettings::default();
+                                self.state.guild_cache.settings.insert(GuildId::from(guild_id), settings.clone()).await;
+                                settings
+                            },
+                            Err(e) => {
+                                error!("Failed to insert new server settings: {}", e);
+                                let _ = msg.reply_ping(ctx.http, "Error when setting new server settings".to_string()).await;
+                                return;
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error!("Failed to get server settings: {}", e);
+                        let _ = msg.reply_ping(ctx.http, "Error when getting server settings".to_string()).await;
+                        return;
+                    }
+                        
+                }
+            }
+            
+        };
+        
+        if !msg.content.starts_with(&settings.prefix) { return }
 
         // matches prefix
         let content = msg.content.to_lowercase();
-        let content = content.trim_start_matches(prefix);
+        let content = content.trim_start_matches(&settings.prefix);
         let (command, args) = match content.split_once(char::is_whitespace) {
             Some((command, args)) => (command, args.trim()),
             None => (content, ""),
@@ -50,11 +77,6 @@ impl EventHandler for Bot {
 
             _ => return
         };
-
-        // let embed = CreateEmbed::new()
-        //     .title("Hello, World!")
-        //     .description("This is an embedded message created with Serenity.")
-        //     .color(0x00A0E0); // Sets a teal/blue color
 
         let message = message.allowed_mentions(CreateAllowedMentions::new().replied_user(true)).reference_message(&msg);
 
@@ -134,10 +156,9 @@ async fn main() {
 
     let server_settings_records = query!("SELECT guild_id, prefix FROM GUILDS_SETTINGS;").fetch_all(&bot_state.db_pool).await.expect("Couldn't fetch settings from database");
     for row in server_settings_records {
-        bot_state.guild_cache.settings.insert(GuildId::from(row.guild_id as u64), GuildSettings::new(row.prefix.chars().next().unwrap())).await;
+        bot_state.guild_cache.settings.insert(GuildId::from(row.guild_id as u64), GuildSettings::new(&row.prefix)).await;
     }
-
-
+    
 
     // Start listening for events by starting a single shard
     if let Err(why) = client.start().await {

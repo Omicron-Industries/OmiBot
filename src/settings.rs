@@ -1,15 +1,15 @@
 
-pub const DEFAULT_PREFIX: char = '%';
+pub const DEFAULT_PREFIX: &str = "%";
 
 #[derive(Clone)]
 pub struct GuildSettings {
-    pub prefix: char,
+    pub prefix: String,
 }
 
 impl GuildSettings {
-    pub fn new(prefix: char) -> Self {
+    pub fn new(prefix: &str) -> Self {
         GuildSettings {
-            prefix,
+            prefix: prefix.to_string(),
         }
     }
     
