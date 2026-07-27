@@ -2,7 +2,7 @@ use crate::settings::DEFAULT_PREFIX;
 use crate::{settings, BotState};
 use log::error;
 use rquickjs::Ctx;
-use serenity::all::{Context, GuildId, Message};
+use serenity::all::{Context, CreateAllowedMentions, CreateMessage, GuildId, Message};
 use std::sync::Arc;
 
 mod admin;
@@ -33,6 +33,22 @@ pub struct CommandContext {
 }
 
 impl CommandContext {
+    pub fn new(
+        serenity_ctx: Context,
+        msg: Message,
+        args: Option<String>,
+        state: Arc<BotState>,
+        help: bool,
+    ) -> Self {
+        CommandContext {
+            serenity_ctx,
+            msg,
+            args,
+            state,
+            help,
+        }
+    }
+
     pub fn with_new_args(&self, args: Option<String>) -> Self {
         CommandContext {
             serenity_ctx: self.serenity_ctx.clone(),
@@ -156,12 +172,53 @@ pub async fn send_reply_ping_text(ctx: &CommandContext, content: &str) {
     }
 }
 
+pub async fn send_reply_ping_message(ctx: &CommandContext, msg: CreateMessage) {
+    let message = msg
+        .allowed_mentions(CreateAllowedMentions::new().replied_user(true))
+        .reference_message(&ctx.msg);
+
+    if let Err(e) = ctx
+        .msg
+        .channel_id
+        .send_message(&ctx.serenity_ctx.http, message)
+        .await
+    {
+        error!("Error sending message: {:?}", e);
+    }
+}
+
+const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
+    &CommandCategory {
+        name: Some("Commands"),
+        description: None,
+        commands: &[&ping::INFO, &tag::INFO, &eval::INFO, &help::INFO],
+    },
+    &CommandCategory {
+        name: Some("Admin"),
+        description: None,
+        commands: &[&admin::ban::INFO, &admin::settings::INFO],
+    },
+];
+
+pub const INFO: CommandInfo = CommandInfo {
+    command: "<command>",
+    usage: None,
+    full_desc: "",
+    short_desc: None,
+    aliases: &[],
+    further_help: Some(
+        "`{PREFIX}<any_command> help` will give additional information about each command.\
+    \n-# <angle_brackets> denote required arguments, while [square_brackets] denote optional arguments in all help commands.",
+    ),
+    subcommands: Some(SUBCOMMANDS),
+};
+
 pub async fn dispatch(ctx: &mut CommandContext) {
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("ping") => ping::execute(ctx).await,
+        Some("ping") => ping::dispatch(ctx).await,
         Some("tag") | Some("t") => tag::dispatch(ctx).await,
-        Some("eval") => eval::execute(ctx).await,
+        Some("eval") => eval::dispatch(ctx).await,
         Some("help") => help::dispatch(ctx).await,
         Some("settings") => admin::settings::dispatch(ctx).await,
         Some("ban") => admin::ban::dispatch(ctx).await,

@@ -1,9 +1,7 @@
 use bunny_bot::cache::GuildCache;
-use bunny_bot::commands::help::help;
-use bunny_bot::commands::ping::execute;
+use bunny_bot::commands::CommandContext;
 use bunny_bot::settings::{GuildSettings, DEFAULT_PREFIX};
-use bunny_bot::tags::tag;
-use bunny_bot::BotState;
+use bunny_bot::{commands, BotState};
 use log::{error, info, logger};
 use serenity::all::{CreateAllowedMentions, CreateEmbed, CreateMessage, GuildId};
 use serenity::async_trait;
@@ -91,29 +89,32 @@ impl EventHandler for Bot {
             return;
         }
 
-        // matches prefix
-        // let content = msg.content.to_lowercase();
-        let content = msg.content.trim_start_matches(&settings.prefix);
-        let (command, args) = match content.split_once(char::is_whitespace) {
-            Some((command, args)) => (command.to_lowercase(), Some(args.trim())),
-            None => (content.to_lowercase(), None),
-        };
+        let content = msg.content.clone();
+        let content = content.trim_start_matches(&settings.prefix).to_string();
+        // let (command, args) = match content.split_once(char::is_whitespace) {
+        //     Some((command, args)) => (command.to_lowercase(), Some(args.trim())),
+        //     None => (content.to_lowercase(), None),
+        // };
 
-        let message: CreateMessage = match command.as_str() {
-            "ping" => execute(args).await,
-            "tag" | "t" => tag(args, &msg, self.state.clone()).await,
-            "help" => help(args, &msg, self.state.clone()).await,
+        let mut cmd_ctx = CommandContext::new(ctx, msg, Some(content), self.state.clone(), false);
 
-            _ => return,
-        };
+        commands::dispatch(&mut cmd_ctx).await;
 
-        let message = message
-            .allowed_mentions(CreateAllowedMentions::new().replied_user(true))
-            .reference_message(&msg);
+        // let message: CreateMessage = match command.as_str() {
+        //     "ping" => execute(args).await,
+        //     "tag" | "t" => tag(args, &msg, self.state.clone()).await,
+        //     "help" => help(args, &msg, self.state.clone()).await,
+        //
+        //     _ => return,
+        // };
 
-        if let Err(e) = msg.channel_id.send_message(&ctx.http, message).await {
-            error!("Error sending message: {:?}", e);
-        }
+        // let message = message
+        //     .allowed_mentions(CreateAllowedMentions::new().replied_user(true))
+        //     .reference_message(&msg);
+        //
+        // if let Err(e) = msg.channel_id.send_message(&ctx.http, message).await {
+        //     error!("Error sending message: {:?}", e);
+        // }
     }
 }
 

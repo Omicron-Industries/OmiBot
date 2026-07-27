@@ -14,6 +14,7 @@ pub const INFO: CommandInfo = CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
+    let orig_ctx = &ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
         Some("") => {}

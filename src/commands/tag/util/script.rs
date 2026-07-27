@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use rquickjs::{Context, Runtime};
+use serde::{Deserialize, Serialize};
 use serenity::all::{ChannelId, GuildId, UserId};
 
 pub struct ScriptContext {
@@ -8,7 +8,6 @@ pub struct ScriptContext {
     pub channel_id: ChannelId,
     pub author_id: UserId,
 }
-
 
 pub struct ScriptEngine {
     runtime: Runtime,
@@ -21,11 +20,7 @@ impl ScriptEngine {
         })
     }
 
-    pub fn execute(
-        &self,
-        script: &str,
-        script_ctx: ScriptContext,
-    ) -> rquickjs::Result<String> {
+    pub fn execute(&self, script: &str, script_ctx: ScriptContext) -> rquickjs::Result<String> {
         let ctx = Context::full(&self.runtime)?;
 
         ctx.with(|ctx| {
@@ -35,7 +30,6 @@ impl ScriptEngine {
             //     ctx,
             //     script_ctx,
             // )?;
-
 
             // let result: String = ctx.eval(script)?;
 
@@ -61,4 +55,3 @@ impl ScriptEngine {
 pub struct ScriptTagContent {
     pub script: String,
 }
-

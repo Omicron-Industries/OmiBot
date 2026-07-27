@@ -12,17 +12,12 @@ pub const INFO: CommandInfo = CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
+    let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("") => {}
         Some("help") => command_help(ctx, INFO).await,
-        _ => {}
+        _ => execute(&mut orig_ctx).await,
     }
 }
 
-pub async fn execute(ctx: &CommandContext) {
-    if ctx.help {
-        command_help(ctx, INFO).await;
-        return;
-    }
-}
+pub async fn execute(ctx: &CommandContext) {}

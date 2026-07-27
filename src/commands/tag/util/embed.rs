@@ -3,5 +3,5 @@ use serenity::all::Embed;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmbedTagContent {
-    pub embed: Embed
+    pub embed: Embed,
 }
