@@ -1,11 +1,11 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
 use crate::commands::tag::util::alias::AliasTagContent;
-use crate::commands::tag::util::db::{create_tag, fetch_tag, CreateTagError};
 use crate::commands::tag::util::script::ScriptTagContent;
 use crate::commands::tag::util::text::TextTagContent;
 use crate::commands::tag::util::{try_create_tag, CreateTagModel, TagPayload};
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::db::tags::fetch::fetch_tag;
 use log::error;
 
 pub const INFO: CommandInfo = CommandInfo {

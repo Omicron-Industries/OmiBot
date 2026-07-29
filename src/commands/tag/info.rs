@@ -1,7 +1,10 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::db::fetch_tag;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::db::tags::fetch::{fetch_owners_tags, fetch_tag};
+use crate::db::DbId;
 use log::error;
+use serenity::all::{GuildId, UserId};
+use sqlx::PgPool;
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "",
@@ -58,4 +61,26 @@ pub async fn execute(ctx: &mut CommandContext) {
             .await
         }
     }
+}
+
+pub async fn get_users_tags_msg(gid: GuildId, uid: UserId, db: &PgPool) -> String {
+    let tags = match fetch_owners_tags(uid.db_id(), gid.db_id(), db).await {
+        Ok(tags) => tags,
+        Err(e) => {
+            error!("Error fetching tags of user {uid}");
+            return format!("Error fetching tags of user <@{uid}>!");
+        }
+    };
+
+    if tags.is_empty() {
+        return format!("User <@{uid}> does not own any tags!");
+    }
+
+    let tag_list = tags
+        .iter()
+        .map(|tag| tag.name.as_str())
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    format!("<@{uid}>'s Tags:\n{tag_list}")
 }

@@ -1,12 +1,12 @@
 use crate::commands::tag::util::alias::AliasTagContent;
-use crate::commands::tag::util::db::{create_tag, CreateTagError};
 use crate::commands::tag::util::embed::EmbedTagContent;
 use crate::commands::tag::util::script::ScriptTagContent;
 use crate::commands::tag::util::text::TextTagContent;
 use crate::commands::{send_reply_ping_text, CommandContext};
+use crate::db::tags::create::{create_tag, CreateTagError};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use serenity::all::{GuildId, Message, UserId};
+use serenity::all::{Message, UserId};
 use sqlx::types::chrono;
 use std::num::ParseIntError;
 
@@ -27,10 +27,10 @@ pub enum TagKind {
 impl TagKind {
     pub fn from_payload(tag_payload: &TagPayload) -> Self {
         match tag_payload {
-            TagPayload::Text(tag_content) => TagKind::Text,
-            TagPayload::Alias(tag_content) => TagKind::Alias,
-            TagPayload::Embed(tag_content) => TagKind::Embed,
-            TagPayload::Script(tag_content) => TagKind::Script,
+            TagPayload::Text(_) => TagKind::Text,
+            TagPayload::Alias(_) => TagKind::Alias,
+            TagPayload::Embed(_) => TagKind::Embed,
+            TagPayload::Script(_) => TagKind::Script,
         }
     }
 }
@@ -46,25 +46,25 @@ pub enum TagPayload {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FetchTagModel {
-    pub(crate) id: i32,
-    guild_id: i64,
-    pub(crate) owner_id: i64,
-    pub(crate) name: String,
-    pub(crate) kind: TagKind,
-    pub(crate) payload: Value,
-    pub(crate) t_created: chrono::DateTime<chrono::Utc>,
-    pub(crate) t_updated: chrono::DateTime<chrono::Utc>,
-    enabled: bool,
-    pub(crate) alias_target_name: Option<String>,
+    pub id: i32,
+    pub guild_id: i64,
+    pub owner_id: i64,
+    pub name: String,
+    pub kind: TagKind,
+    pub payload: Value,
+    pub t_created: chrono::DateTime<chrono::Utc>,
+    pub t_updated: chrono::DateTime<chrono::Utc>,
+    pub enabled: bool,
+    pub alias_target_name: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateTagModel {
-    guild_id: i64,
-    owner_id: i64,
-    name: String,
-    kind: TagKind,
-    payload: TagPayload,
+    pub guild_id: i64,
+    pub owner_id: i64,
+    pub name: String,
+    pub kind: TagKind,
+    pub payload: TagPayload,
 }
 
 impl CreateTagModel {
@@ -103,22 +103,6 @@ pub async fn try_create_tag(ctx: &CommandContext, tag: CreateTagModel) {
             .await
         }
     };
-}
-
-trait DbId {
-    fn db_id(&self) -> i64;
-}
-
-impl DbId for GuildId {
-    fn db_id(&self) -> i64 {
-        self.get() as i64
-    }
-}
-
-impl DbId for UserId {
-    fn db_id(&self) -> i64 {
-        self.get() as i64
-    }
 }
 
 pub fn get_uid_from_user_text(text: &str) -> Result<UserId, ParseIntError> {

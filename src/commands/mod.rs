@@ -10,7 +10,7 @@ mod auth;
 mod eval;
 mod help;
 mod ping;
-mod tag;
+pub(crate) mod tag;
 
 //TODO make sure prefix is always in cache
 pub async fn get_prefix(ctx: &CommandContext) -> String {

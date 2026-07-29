@@ -1,10 +1,10 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::payload_mismatch_error;
-use crate::commands::tag::util::db::{fetch_tag, fetch_tag_resolved};
 use crate::commands::tag::util::script::ScriptTagContent;
 use crate::commands::tag::util::text::TextTagContent;
 use crate::commands::tag::util::TagKind::{Alias, Embed, Script, Text};
 use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo};
+use crate::db::tags::fetch::fetch_tag;
 use log::error;
 use serenity::all::{CreateAttachment, CreateMessage};
 

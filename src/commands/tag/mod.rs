@@ -1,5 +1,4 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::db::fetch_tag_resolved;
 use crate::commands::tag::util::embed::EmbedTagContent;
 use crate::commands::tag::util::script::{ScriptContext, ScriptEngine, ScriptTagContent};
 use crate::commands::tag::util::text::TextTagContent;
@@ -7,6 +6,7 @@ use crate::commands::tag::util::TagKind;
 use crate::commands::{
     get_prefix, send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo,
 };
+use crate::db::tags::fetch::fetch_tag_resolved;
 use crate::BotState;
 use log::error;
 use serenity::builder::{CreateEmbed, CreateMessage};
@@ -15,6 +15,7 @@ use std::sync::Arc;
 mod add;
 mod alias;
 mod ban;
+mod bans;
 mod chown;
 mod delete;
 mod edit;
@@ -24,7 +25,8 @@ mod list;
 mod raw;
 mod rename;
 mod search;
-mod util;
+mod unban;
+pub(crate) mod util;
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "tag",
@@ -40,24 +42,26 @@ pub const INFO: CommandInfo = CommandInfo {
 
 /// All names for the tag command reserved for subcommands, prohibited from being made into a tag.
 pub const TAG_SUBCOMMANDS: &[&str] = &[
-    "add", "edit", "delete", "del", "alias", "info", "raw", "list", "search", "chown", "transfer",
-    "ban", "help",
+    "add", "create", "edit", "delete", "del", "alias", "info", "owner", "raw", "list", "search",
+    "chown", "transfer", "ban", "unban", "bans", "help",
 ];
 
 pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("add") => add::dispatch(ctx).await,
+        Some("add") | Some("create") => add::dispatch(ctx).await,
         Some("edit") => edit::dispatch(ctx).await,
         Some("delete") | Some("del") => delete::dispatch(ctx).await,
         Some("alias") => alias::dispatch(ctx).await,
-        Some("info") => info::dispatch(ctx).await,
+        Some("info") | Some("owner") => info::dispatch(ctx).await,
         Some("raw") => raw::dispatch(ctx).await,
         Some("list") => list::dispatch(ctx).await,
         Some("search") => search::dispatch(ctx).await,
         Some("chown") | Some("transfer") => chown::dispatch(ctx).await,
         Some("ban") => ban::dispatch(ctx).await,
+        Some("unban") => unban::dispatch(ctx).await,
+        Some("bans") => bans::dispatch(ctx).await,
         Some("help") => {
             let next = ctx.consume_arg();
             match next.as_deref() {

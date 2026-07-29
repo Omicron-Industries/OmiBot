@@ -1,5 +1,5 @@
 use crate::commands::help::command_help;
-use crate::commands::tag::util::db::get_users_tags_msg;
+use crate::commands::tag::info::get_users_tags_msg;
 use crate::commands::tag::util::get_uid_from_user_text;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 
