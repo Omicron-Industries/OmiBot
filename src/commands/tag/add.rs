@@ -1,5 +1,9 @@
-use crate::commands::help::command_help;
-use crate::commands::{CommandContext, CommandInfo};
+use crate::commands::help::{command_help, command_usage};
+use crate::commands::tag::tag_name_validator;
+use crate::commands::tag::util::script::ScriptTagContent;
+use crate::commands::tag::util::text::TextTagContent;
+use crate::commands::tag::util::{try_create_tag, CreateTagModel, TagPayload};
+use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "tag add",
@@ -22,4 +26,36 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     }
 }
 
-pub async fn execute(ctx: &CommandContext) {}
+pub async fn execute(ctx: &mut CommandContext) {
+    let Some(name) = ctx.consume_arg() else {
+        return command_usage(ctx, INFO).await;
+    };
+    if ctx.args.is_none() {
+        return command_usage(ctx, INFO).await;
+    }
+    match tag_name_validator(&name) {
+        Some(err_msg) => send_reply_ping_text(ctx, err_msg.as_str()).await,
+        None => {
+            let payload: TagPayload = {
+                if let Some(inner) = ctx
+                    .args
+                    .clone()
+                    .unwrap()
+                    .strip_prefix("```js")
+                    .and_then(|args| args.strip_suffix("```"))
+                {
+                    TagPayload::Script(ScriptTagContent {
+                        script: inner.to_string(),
+                    })
+                } else {
+                    TagPayload::Text(TextTagContent {
+                        content: ctx.args.clone().unwrap_or_default().to_string(),
+                    })
+                }
+            };
+            // TODO: Add embed support
+
+            try_create_tag(ctx, CreateTagModel::with_ctx(&ctx, &name, payload)).await
+        }
+    }
+}

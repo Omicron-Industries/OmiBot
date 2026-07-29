@@ -22,6 +22,7 @@ mod help;
 mod info;
 mod list;
 mod raw;
+mod rename;
 mod search;
 mod util;
 
@@ -37,19 +38,25 @@ pub const INFO: CommandInfo = CommandInfo {
     subcommands: None,
 };
 
+/// All names for the tag command reserved for subcommands, prohibited from being made into a tag.
+pub const TAG_SUBCOMMANDS: &[&str] = &[
+    "add", "edit", "delete", "del", "alias", "info", "raw", "list", "search", "chown", "transfer",
+    "ban", "help",
+];
+
 pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
         Some("add") => add::dispatch(ctx).await,
         Some("edit") => edit::dispatch(ctx).await,
-        Some("delete") => delete::dispatch(ctx).await,
+        Some("delete") | Some("del") => delete::dispatch(ctx).await,
         Some("alias") => alias::dispatch(ctx).await,
         Some("info") => info::dispatch(ctx).await,
         Some("raw") => raw::dispatch(ctx).await,
         Some("list") => list::dispatch(ctx).await,
         Some("search") => search::dispatch(ctx).await,
-        Some("chown") => chown::dispatch(ctx).await,
+        Some("chown") | Some("transfer") => chown::dispatch(ctx).await,
         Some("ban") => ban::dispatch(ctx).await,
         Some("help") => {
             let next = ctx.consume_arg();
@@ -70,13 +77,7 @@ pub async fn execute(ctx: &mut CommandContext) {
         return command_usage(ctx, INFO).await;
     };
 
-    match fetch_tag_resolved(
-        &tag_name,
-        ctx.msg.guild_id.unwrap().get() as i64,
-        ctx.state.clone(),
-    )
-    .await
-    {
+    match fetch_tag_resolved(&tag_name, ctx.msg.guild_id.unwrap(), &ctx.state.db_pool).await {
         Err(e) => {
             error!("Failed to get tag: {}", e);
             send_reply_ping_text(
@@ -200,4 +201,24 @@ async fn payload_mismatch_error(ctx: &CommandContext, name: &str) {
         .as_str(),
     )
     .await;
+}
+
+pub fn tag_name_validator(name: &str) -> Option<String> {
+    if TAG_SUBCOMMANDS.contains(&name) {
+        Some(format!(
+            "Tag name **{name}** is disallowed, as it is a subcommand!"
+        ))
+    } else if !name
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+    {
+        Some(
+            "Tag name must contain only letters, numbers, underscores (_), and hyphens (-)."
+                .to_string(),
+        )
+    } else if name.len() > 32 {
+        Some("Tag name must not exceed 32 characters.".to_string())
+    } else {
+        None
+    }
 }

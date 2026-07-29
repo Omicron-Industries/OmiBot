@@ -2,10 +2,11 @@ use crate::settings::DEFAULT_PREFIX;
 use crate::{settings, BotState};
 use log::error;
 use rquickjs::Ctx;
-use serenity::all::{Context, CreateAllowedMentions, CreateMessage, GuildId, Message};
+use serenity::all::{Context, CreateAllowedMentions, CreateMessage, GuildId, Message, UserId};
 use std::sync::Arc;
 
 mod admin;
+mod auth;
 mod eval;
 mod help;
 mod ping;
@@ -57,6 +58,14 @@ impl CommandContext {
             state: self.state.clone(),
             help: self.help,
         }
+    }
+
+    pub fn get_guild_id(&self) -> GuildId {
+        self.msg.guild_id.unwrap()
+    }
+
+    pub fn get_author_id(&self) -> UserId {
+        self.msg.author.id
     }
 }
 

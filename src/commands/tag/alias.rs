@@ -1,11 +1,18 @@
-use crate::commands::help::command_help;
-use crate::commands::{CommandContext, CommandInfo};
+use crate::commands::help::{command_help, command_usage};
+use crate::commands::tag::tag_name_validator;
+use crate::commands::tag::util::alias::AliasTagContent;
+use crate::commands::tag::util::db::{create_tag, fetch_tag, CreateTagError};
+use crate::commands::tag::util::script::ScriptTagContent;
+use crate::commands::tag::util::text::TextTagContent;
+use crate::commands::tag::util::{try_create_tag, CreateTagModel, TagPayload};
+use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use log::error;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag alias",
+    usage: Some("<new_alias> <existing_tag>"),
+    full_desc: "Alias a tag to another tag.",
+    short_desc: None,
     aliases: &[],
     further_help: None,
     subcommands: None,
@@ -20,4 +27,44 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     }
 }
 
-pub async fn execute(ctx: &CommandContext) {}
+pub async fn execute(ctx: &mut CommandContext) {
+    let Some(name) = ctx.consume_arg() else {
+        return command_usage(ctx, INFO).await;
+    };
+    if ctx.args.is_none() {
+        return command_usage(ctx, INFO).await;
+    }
+    match tag_name_validator(&name) {
+        Some(err_msg) => send_reply_ping_text(ctx, err_msg.as_str()).await,
+        None => {
+            let source_tag = match fetch_tag(&name, ctx.get_guild_id(), &ctx.state.db_pool).await {
+                Ok(fetched) => match fetched {
+                    Some(src_tag) => src_tag,
+                    None => {
+                        send_reply_ping_text(
+                            ctx,
+                            format!("Tag **{}** does not exist!", name).as_str(),
+                        )
+                        .await;
+                        return;
+                    }
+                },
+                Err(e) => {
+                    error!("Error when fetching source tag of alias: {}", e);
+                    send_reply_ping_text(ctx, "Error reading source tag!").await;
+                    return;
+                }
+            };
+
+            let payload = AliasTagContent {
+                target_id: source_tag.id,
+            };
+
+            try_create_tag(
+                ctx,
+                CreateTagModel::with_ctx(&ctx, &name, TagPayload::Alias(payload)),
+            )
+            .await
+        }
+    }
+}
