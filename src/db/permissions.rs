@@ -1,38 +1,37 @@
 use crate::db::DbId;
 use serenity::all::{GuildId, UserId};
-use sqlx::PgPool;
-
-pub async fn has_edit_perms_on_tag(
-    name: &str,
-    uid: UserId,
-    gid: GuildId,
-    db: &PgPool,
-) -> Result<bool, sqlx::Error> {
-    sqlx::query_scalar!(
-        r#"
-    SELECT EXISTS (
-        SELECT 1
-        FROM tags t
-        WHERE t.guild_id = $1
-          AND t.name = $2
-          AND (
-              t.owner_id = $3
-              OR EXISTS (
-                  SELECT 1
-                  FROM admins a
-                  WHERE a.guild_id = $1
-                    AND a.member_id = $3
-              )
-          )
-    ) as "exists!"
-    "#,
-        gid.db_id(),
-        name,
-        uid.db_id(),
-    )
-    .fetch_one(db)
-    .await
-}
+use sqlx::{Error, PgPool};
+// pub async fn has_edit_perms_on_tag(
+//     name: &str,
+//     uid: UserId,
+//     gid: GuildId,
+//     db: &PgPool,
+// ) -> Result<bool, sqlx::Error> {
+//     sqlx::query_scalar!(
+//         r#"
+//     SELECT EXISTS (
+//         SELECT 1
+//         FROM tags t
+//         WHERE t.guild_id = $1
+//           AND t.name = $2
+//           AND (
+//               t.owner_id = $3
+//               OR EXISTS (
+//                   SELECT 1
+//                   FROM admins a
+//                   WHERE a.guild_id = $1
+//                     AND a.member_id = $3
+//               )
+//           )
+//     ) as "exists!"
+//     "#,
+//         gid.db_id(),
+//         name,
+//         uid.db_id(),
+//     )
+//     .fetch_one(db)
+//     .await
+// }
 
 pub async fn is_admin(uid: UserId, gid: GuildId, db: &PgPool) -> Result<bool, sqlx::Error> {
     sqlx::query_scalar!(
@@ -51,11 +50,11 @@ pub async fn is_admin(uid: UserId, gid: GuildId, db: &PgPool) -> Result<bool, sq
     .await
 }
 
-struct TagEditableInfo {
-    is_owner: bool,
-    is_admin: bool,
-    is_user_banned: bool,
-    tag_enabled: bool,
+pub struct TagEditableInfo {
+    pub is_owner: bool,
+    pub is_admin: bool,
+    pub is_user_banned: bool,
+    pub tag_enabled: bool,
 }
 
 pub async fn get_tag_editable_info(
@@ -63,7 +62,7 @@ pub async fn get_tag_editable_info(
     uid: UserId,
     tag_name: &str,
     db: &PgPool,
-) -> Result<Option<TagEditableInfo>, sqlx::Error> {
+) -> Result<Option<TagEditableInfo>, Error> {
     sqlx::query_as!(
         TagEditableInfo,
         r#"

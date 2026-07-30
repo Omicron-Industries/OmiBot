@@ -1,18 +1,18 @@
 use crate::settings::DEFAULT_PREFIX;
-use crate::{settings, BotState};
+// use crate::commands::eval::dispatch as other_dispatch;
+use crate::BotState;
 use log::error;
 use rquickjs::Ctx;
 use serenity::all::{Context, CreateAllowedMentions, CreateMessage, GuildId, Message, UserId};
 use std::sync::Arc;
 
-mod admin;
-mod auth;
 mod eval;
 mod help;
 mod ping;
+mod settings;
 pub(crate) mod tag;
 
-//TODO make sure prefix is always in cache
+//TODO make sure settings is always in cache
 pub async fn get_prefix(ctx: &CommandContext) -> String {
     ctx.state
         .guild_cache
@@ -101,15 +101,24 @@ impl CommandContext {
 
 impl CommandContext {
     pub fn consume_arg(&mut self) -> Option<String> {
+        let (first, remaining) = self.parse_next_arg();
+        self.args = remaining;
+        first
+    }
+
+    pub fn peek_arg(&mut self) -> Option<String> {
+        self.parse_next_arg().0
+    }
+
+    fn parse_next_arg(&mut self) -> (Option<String>, Option<String>) {
         if let Some(args) = &self.args {
             let (first, remaining) = match args.split_once(char::is_whitespace) {
                 Some((next, args)) => (next.to_lowercase(), Some(args.to_string())),
                 None => (args.to_lowercase(), None),
             };
-            self.args = remaining;
-            Some(first)
+            (Some(first), remaining)
         } else {
-            None
+            (None, None)
         }
     }
 
@@ -205,7 +214,7 @@ const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
     &CommandCategory {
         name: Some("Admin"),
         description: None,
-        commands: &[&admin::ban::INFO, &admin::settings::INFO],
+        commands: &[&settings::INFO],
     },
 ];
 
@@ -223,14 +232,18 @@ pub const INFO: CommandInfo = CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
+    if matches!(ctx.peek_arg().as_deref(), Some("help")) {
+        ctx.consume_arg();
+        ctx.set_help();
+    }
+
     let command = ctx.consume_arg();
     match command.as_deref() {
         Some("ping") => ping::dispatch(ctx).await,
         Some("tag") | Some("t") => tag::dispatch(ctx).await,
         Some("eval") => eval::dispatch(ctx).await,
-        Some("help") => help::dispatch(ctx).await,
-        Some("settings") => admin::settings::dispatch(ctx).await,
-        Some("ban") => admin::ban::dispatch(ctx).await,
-        _ => {}
+        Some("settings") => settings::dispatch(ctx).await,
+        None if ctx.help => help::execute(ctx).await,
+        _ => help::execute(ctx).await,
     }
 }

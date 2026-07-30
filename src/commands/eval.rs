@@ -1,3 +1,4 @@
+use crate::commands::help::command_help;
 use crate::commands::{CommandContext, CommandInfo};
 
 pub const INFO: CommandInfo = CommandInfo {
@@ -11,11 +12,11 @@ pub const INFO: CommandInfo = CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
-    let orig_ctx = &ctx.clone();
+    let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("") => {}
-        _ => {}
+        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        _ => execute(&mut orig_ctx).await,
     }
 }
 

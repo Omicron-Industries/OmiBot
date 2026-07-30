@@ -3,41 +3,39 @@ use serenity::all::{GuildId, UserId};
 use sqlx::PgPool;
 
 pub async fn ban_tag(gid: GuildId, tag_name: &str, db: &PgPool) -> Result<bool, sqlx::Error> {
-    let changed = sqlx::query_scalar!(
+    let res = sqlx::query_scalar!(
         r#"
         UPDATE tags
         SET enabled = false,
             t_updated = CURRENT_TIMESTAMP
         WHERE guild_id = $1
           AND name = $2
-        RETURNING true AS "changed!"
         "#,
         gid.db_id(),
         tag_name,
     )
-    .fetch_optional(db)
+    .execute(db)
     .await?;
 
-    Ok(changed.unwrap_or(false))
+    Ok(res.rows_affected() > 0)
 }
 
 pub async fn unban_tag(gid: GuildId, tag_name: &str, db: &PgPool) -> Result<bool, sqlx::Error> {
-    let changed = sqlx::query_scalar!(
+    let res = sqlx::query_scalar!(
         r#"
         UPDATE tags
         SET enabled = true,
             t_updated = CURRENT_TIMESTAMP
         WHERE guild_id = $1
           AND name = $2
-        RETURNING true AS "changed!"
         "#,
         gid.db_id(),
         tag_name,
     )
-    .fetch_optional(db)
+    .execute(db)
     .await?;
 
-    Ok(changed.unwrap_or(false))
+    Ok(res.rows_affected() > 0)
 }
 
 pub async fn ban_user(
@@ -45,8 +43,8 @@ pub async fn ban_user(
     banned_by: UserId,
     gid: GuildId,
     db: &PgPool,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+) -> Result<bool, sqlx::Error> {
+    let res = sqlx::query!(
         r#"
         INSERT INTO bans (guild_id, user_id, banned_by)
         VALUES ($1, $2, $3)
@@ -59,7 +57,7 @@ pub async fn ban_user(
     .execute(db)
     .await?;
 
-    Ok(())
+    Ok(res.rows_affected() > 0)
 }
 
 pub async fn unban_user(uid: UserId, gid: GuildId, db: &PgPool) -> Result<bool, sqlx::Error> {

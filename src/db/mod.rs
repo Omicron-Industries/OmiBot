@@ -1,6 +1,7 @@
 use serenity::all::{GuildId, UserId};
 
 pub mod permissions;
+pub mod settings;
 pub mod tags;
 
 pub trait DbId {

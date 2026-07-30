@@ -1,7 +1,6 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::permissions::get_tag_edit_permissions_msg;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
-use crate::db::tags::edit::delete_tag;
+use crate::db::settings::set_prefix;
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "",
@@ -23,20 +22,30 @@ pub async fn dispatch(ctx: &mut CommandContext) {
 }
 
 pub async fn execute(ctx: &mut CommandContext) {
-    let Some(name) = ctx.consume_arg() else {
-        return command_usage(ctx, crate::commands::tag::chown::INFO).await;
+    let Some(prefix) = ctx.consume_arg() else {
+        return command_usage(ctx, INFO).await;
     };
-    if let Some(msg) = get_tag_edit_permissions_msg(ctx, &name).await {
-        send_reply_ping_text(ctx, &msg).await
+    if prefix.len() != 1 {
+        return send_reply_ping_text(ctx, "Expected a single character!").await;
     }
-    match delete_tag(ctx.get_guild_id(), &name, &ctx.state.db_pool).await {
-        Err(e) => send_reply_ping_text(ctx, format!("Error deleting tag: {:?}", e).as_str()).await,
-        Ok(_) => {
+
+    match set_prefix(
+        ctx.get_guild_id(),
+        prefix.chars().next().unwrap(),
+        &ctx.state,
+    )
+    .await
+    {
+        Ok(true) => send_reply_ping_text(ctx, format!("Set prefix to `{prefix}`.").as_str()).await,
+        Ok(false) => {
             send_reply_ping_text(
                 ctx,
-                format!("Successfully deleted tag **{}**.", name).as_str(),
+                "Failed to update prefix. DB query succeeded, but 0 rows affected",
             )
             .await
+        }
+        Err(e) => {
+            send_reply_ping_text(ctx, format!("Failed to update prefix: {:?}", e).as_str()).await
         }
     }
 }

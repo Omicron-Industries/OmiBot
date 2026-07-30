@@ -19,7 +19,6 @@ mod bans;
 mod chown;
 mod delete;
 mod edit;
-mod help;
 mod info;
 mod list;
 mod raw;
@@ -71,6 +70,7 @@ pub async fn dispatch(ctx: &mut CommandContext) {
             }
         }
 
+        _ if ctx.help => command_help(ctx, INFO).await,
         Some(_) => execute(&mut orig_ctx).await,
         None => command_usage(ctx, INFO).await,
     }

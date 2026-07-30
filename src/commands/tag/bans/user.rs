@@ -1,7 +1,6 @@
 use crate::commands::help::command_help;
-use crate::commands::tag::info::get_users_tags_msg;
-use crate::commands::tag::util::get_uid_from_user_text;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::db::tags::bans::list_banned_users;
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "",
@@ -23,18 +22,22 @@ pub async fn dispatch(ctx: &mut CommandContext) {
 }
 
 pub async fn execute(ctx: &mut CommandContext) {
-    match ctx.consume_arg() {
-        None => {
-            get_users_tags_msg(ctx.get_guild_id(), ctx.get_author_id(), &ctx.state.db_pool).await;
+    execute_bans_user(ctx).await;
+}
+
+pub async fn execute_bans_user(ctx: &mut CommandContext) {
+    match list_banned_users(ctx.get_guild_id(), &ctx.state.db_pool).await {
+        Ok(list) => {
+            let mentions = list
+                .iter()
+                .map(|id| format!("<@{}>", id))
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            send_reply_ping_text(ctx, &format!("Banned users: {}", mentions)).await
         }
-        Some(arg) => {
-            let uid = match get_uid_from_user_text(&arg) {
-                Ok(uid) => uid,
-                Err(_) => {
-                    return send_reply_ping_text(ctx, "Expected a user as an argument!").await;
-                }
-            };
-            get_users_tags_msg(ctx.get_guild_id(), uid, &ctx.state.db_pool).await;
+        Err(e) => {
+            send_reply_ping_text(ctx, format!("Error listing banned users: {:?}", e).as_str()).await
         }
     }
 }

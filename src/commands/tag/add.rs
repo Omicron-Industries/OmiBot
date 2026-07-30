@@ -21,7 +21,7 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") => command_help(ctx, INFO).await,
+        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
         _ => execute(&mut orig_ctx).await,
     }
 }
@@ -36,23 +36,21 @@ pub async fn execute(ctx: &mut CommandContext) {
     match tag_name_validator(&name) {
         Some(err_msg) => send_reply_ping_text(ctx, err_msg.as_str()).await,
         None => {
-            let payload: TagPayload = {
-                if let Some(inner) = ctx
-                    .args
-                    .clone()
-                    .unwrap()
-                    .strip_prefix("```js")
-                    .and_then(|args| args.strip_suffix("```"))
-                {
+            let arg = ctx.args.clone().unwrap_or_default();
+
+            let payload: TagPayload =
+                if let Some(inner) = arg.strip_prefix("```").and_then(|s| s.strip_suffix("```")) {
+                    let inner = inner
+                        .strip_prefix("js")
+                        .map(str::trim_start)
+                        .unwrap_or(inner);
+
                     TagPayload::Script(ScriptTagContent {
                         script: inner.to_string(),
                     })
                 } else {
-                    TagPayload::Text(TextTagContent {
-                        content: ctx.args.clone().unwrap_or_default().to_string(),
-                    })
-                }
-            };
+                    TagPayload::Text(TextTagContent { content: arg })
+                };
             // TODO: Add embed support
 
             try_create_tag(ctx, CreateTagModel::with_ctx(&ctx, &name, payload)).await

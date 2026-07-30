@@ -186,7 +186,7 @@ async fn main() {
         .await
         .expect("Couldn't add guilds to database");
 
-    let server_settings_records = query!("SELECT guild_id, prefix FROM GUILDS_SETTINGS;")
+    let server_settings_records = query!("SELECT guild_id, prefix FROM guilds_settings;")
         .fetch_all(&bot_state.db_pool)
         .await
         .expect("Couldn't fetch settings from database");

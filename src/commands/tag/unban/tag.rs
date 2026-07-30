@@ -1,7 +1,6 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::permissions::get_tag_edit_permissions_msg;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
-use crate::db::tags::edit::delete_tag;
+use crate::db::tags::bans::unban_tag;
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "",
@@ -24,19 +23,22 @@ pub async fn dispatch(ctx: &mut CommandContext) {
 
 pub async fn execute(ctx: &mut CommandContext) {
     let Some(name) = ctx.consume_arg() else {
-        return command_usage(ctx, crate::commands::tag::chown::INFO).await;
+        return command_usage(ctx, INFO).await;
     };
-    if let Some(msg) = get_tag_edit_permissions_msg(ctx, &name).await {
-        send_reply_ping_text(ctx, &msg).await
-    }
-    match delete_tag(ctx.get_guild_id(), &name, &ctx.state.db_pool).await {
-        Err(e) => send_reply_ping_text(ctx, format!("Error deleting tag: {:?}", e).as_str()).await,
-        Ok(_) => {
+
+    execute_unban_tag(&name, ctx).await;
+}
+
+pub async fn execute_unban_tag(name: &str, ctx: &mut CommandContext) {
+    match unban_tag(ctx.get_guild_id(), &name, &ctx.state.db_pool).await {
+        Ok(true) => send_reply_ping_text(ctx, format!("Unbanned tag **{name}**.").as_str()).await,
+        Ok(false) => {
             send_reply_ping_text(
                 ctx,
-                format!("Successfully deleted tag **{}**.", name).as_str(),
+                format!("Tag **{name}** does not exist; cannot unban.").as_str(),
             )
             .await
         }
+        Err(e) => send_reply_ping_text(ctx, format!("Error unbanning tag: {:?}", e).as_str()).await,
     }
 }

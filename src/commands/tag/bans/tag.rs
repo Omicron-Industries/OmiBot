@@ -1,7 +1,6 @@
-use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::permissions::get_tag_edit_permissions_msg;
+use crate::commands::help::command_help;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
-use crate::db::tags::edit::delete_tag;
+use crate::db::tags::bans::list_banned_tags;
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "",
@@ -23,20 +22,20 @@ pub async fn dispatch(ctx: &mut CommandContext) {
 }
 
 pub async fn execute(ctx: &mut CommandContext) {
-    let Some(name) = ctx.consume_arg() else {
-        return command_usage(ctx, crate::commands::tag::chown::INFO).await;
-    };
-    if let Some(msg) = get_tag_edit_permissions_msg(ctx, &name).await {
-        send_reply_ping_text(ctx, &msg).await
-    }
-    match delete_tag(ctx.get_guild_id(), &name, &ctx.state.db_pool).await {
-        Err(e) => send_reply_ping_text(ctx, format!("Error deleting tag: {:?}", e).as_str()).await,
-        Ok(_) => {
+    execute_bans_tag(ctx).await;
+}
+
+pub async fn execute_bans_tag(ctx: &mut CommandContext) {
+    match list_banned_tags(ctx.get_guild_id(), &ctx.state.db_pool).await {
+        Ok(list) => {
             send_reply_ping_text(
                 ctx,
-                format!("Successfully deleted tag **{}**.", name).as_str(),
+                format!("Banned tags:**{}**", list.join("**, **")).as_str(),
             )
             .await
+        }
+        Err(e) => {
+            send_reply_ping_text(ctx, format!("Error listing banned tags: {:?}", e).as_str()).await
         }
     }
 }

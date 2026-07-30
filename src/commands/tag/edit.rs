@@ -1,5 +1,10 @@
-use crate::commands::help::command_help;
-use crate::commands::{CommandContext, CommandInfo};
+use crate::commands::help::{command_help, command_usage};
+use crate::commands::tag::tag_name_validator;
+use crate::commands::tag::util::script::ScriptTagContent;
+use crate::commands::tag::util::text::TextTagContent;
+use crate::commands::tag::util::TagPayload;
+use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::db::tags::edit::{edit_tag_content, EditTagError};
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "",
@@ -15,9 +20,53 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") => command_help(ctx, INFO).await,
+        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
         _ => execute(&mut orig_ctx).await,
     }
 }
 
-pub async fn execute(ctx: &CommandContext) {}
+pub async fn execute(ctx: &mut CommandContext) {
+    let Some(name) = ctx.consume_arg() else {
+        return command_usage(ctx, INFO).await;
+    };
+    if ctx.args.is_none() {
+        return command_usage(ctx, INFO).await;
+    }
+    match tag_name_validator(&name) {
+        Some(err_msg) => send_reply_ping_text(ctx, err_msg.as_str()).await,
+        None => {
+            let payload: TagPayload = {
+                if let Some(inner) = ctx
+                    .args
+                    .clone()
+                    .unwrap()
+                    .strip_prefix("```js")
+                    .and_then(|args| args.strip_suffix("```"))
+                {
+                    TagPayload::Script(ScriptTagContent {
+                        script: inner.to_string(),
+                    })
+                } else {
+                    TagPayload::Text(TextTagContent {
+                        content: ctx.args.clone().unwrap_or_default().to_string(),
+                    })
+                }
+            };
+            // TODO: Add embed support
+
+            match edit_tag_content(ctx.get_guild_id(), &name, payload, &ctx.state.db_pool).await {
+                Ok(_) => send_reply_ping_text(ctx, "Successfully edited tag content.").await,
+                Err(EditTagError::Serialize) => {
+                    send_reply_ping_text(ctx, "Failed to serialize tag.").await
+                }
+                Err(EditTagError::DB(e)) => {
+                    send_reply_ping_text(
+                        ctx,
+                        format!("Error editing tag content: {:?}", e).as_str(),
+                    )
+                    .await
+                }
+            }
+        }
+    }
+}

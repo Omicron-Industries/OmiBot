@@ -11,8 +11,8 @@ use sqlx::types::chrono;
 use std::num::ParseIntError;
 
 pub mod alias;
-pub mod db;
 pub mod embed;
+pub mod permissions;
 pub mod script;
 pub mod text;
 
