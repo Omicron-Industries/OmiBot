@@ -153,6 +153,11 @@ pub async fn execute(ctx: &mut CommandContext) {
                         author_id: ctx.msg.author.id,
                         serenity_ctx: std::sync::Arc::new(ctx.serenity_ctx.clone()),
                         db_pool: std::sync::Arc::new(ctx.state.db_pool.clone()),
+                        tag_name: Some(tag_name.clone()),
+                        tag_body: Some(payload.script.clone()),
+                        tag_owner_id: Some(serenity::all::UserId::new(tag.owner_id as u64)),
+                        recursion_depth: 0,
+                        reply_state: Default::default(),
                     };
 
                     engine.execute(&payload.script, script_context)
@@ -173,7 +178,14 @@ pub async fn execute(ctx: &mut CommandContext) {
                             }
                         }
                         crate::util::script::ScriptOutput::Embed(embed_json) => {
-                            if let Ok(embed_data) = serde_json::from_value::<EmbedTagContent>(embed_json) {
+                            let inner_json = embed_json.get("embed").unwrap_or(&embed_json);
+                            if let Ok(js_embed) = serde_json::from_value::<crate::util::script::JsEmbed>(inner_json.clone()) {
+                                send_reply_ping_message(
+                                    ctx,
+                                    CreateMessage::new().embed(CreateEmbed::from(js_embed)),
+                                )
+                                .await;
+                            } else if let Ok(embed_data) = serde_json::from_value::<EmbedTagContent>(embed_json) {
                                 send_reply_ping_message(
                                     ctx,
                                     CreateMessage::new().embed(CreateEmbed::from(embed_data.embed)),
