@@ -1,16 +1,29 @@
 use rquickjs::{class::Trace, Context, Ctx, FromJs, JsLifetime, Result, Runtime};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serenity::model::{
     channel::Message,
-    id::{ChannelId, GuildId},
+    id::{ChannelId, GuildId, UserId},
 };
 use serenity::prelude::Context as SerenityContext;
+use sqlx::PgPool;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+#[derive(Clone)]
 pub struct ScriptContext {
-    pub serenity_ctx: SerenityContext,
     pub message: Message,
     pub args: Option<String>,
+    pub guild_id: GuildId,
+    pub channel_id: ChannelId,
+    pub author_id: UserId,
+    pub serenity_ctx: Arc<SerenityContext>,
+    pub db_pool: Arc<PgPool>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub enum ScriptOutput {
+    Text(String),
+    Embed(serde_json::Value),
 }
 
 #[derive(Clone, Trace, JsLifetime)]
@@ -21,6 +34,12 @@ pub struct JsUser {
 
     #[qjs(skip_trace)]
     username: String,
+
+    #[qjs(skip_trace)]
+    avatar: Option<String>,
+
+    #[qjs(skip_trace)]
+    discriminator: String,
 }
 
 #[rquickjs::methods]
@@ -33,6 +52,16 @@ impl JsUser {
     #[qjs(get)]
     pub fn username(&self) -> String {
         self.username.clone()
+    }
+
+    #[qjs(get)]
+    pub fn avatar(&self) -> Option<String> {
+        self.avatar.clone()
+    }
+
+    #[qjs(get)]
+    pub fn discriminator(&self) -> String {
+        self.discriminator.clone()
     }
 }
 
@@ -71,6 +100,12 @@ impl JsMessage {
 pub struct JsChannel {
     #[qjs(skip_trace)]
     id: u64,
+
+    #[qjs(skip_trace)]
+    name: String,
+
+    #[qjs(skip_trace)]
+    is_dm: bool,
 }
 
 #[rquickjs::methods]
@@ -79,6 +114,16 @@ impl JsChannel {
     pub fn id(&self) -> u64 {
         self.id
     }
+
+    #[qjs(get)]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[qjs(get)]
+    pub fn is_dm(&self) -> bool {
+        self.is_dm
+    }
 }
 
 #[derive(Clone, Trace, JsLifetime)]
@@ -86,6 +131,12 @@ impl JsChannel {
 pub struct JsGuild {
     #[qjs(skip_trace)]
     id: u64,
+
+    #[qjs(skip_trace)]
+    name: String,
+
+    #[qjs(skip_trace)]
+    owner_id: u64,
 }
 
 #[rquickjs::methods]
@@ -93,6 +144,16 @@ impl JsGuild {
     #[qjs(get)]
     pub fn id(&self) -> u64 {
         self.id
+    }
+
+    #[qjs(get)]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[qjs(get)]
+    pub fn owner_id(&self) -> u64 {
+        self.owner_id
     }
 }
 
@@ -149,30 +210,49 @@ pub struct JsEmbedImage {
     pub url: String,
 }
 
+impl From<&Message> for JsUser {
+    fn from(msg: &Message) -> Self {
+        let discriminator = msg.author.discriminator
+            .map(|d| format!("{:04}", d))
+            .unwrap_or_else(|| "0000".to_string());
+
+        Self {
+            id: msg.author.id.get(),
+            username: msg.author.name.clone(),
+            avatar: msg.author.avatar_url(),
+            discriminator,
+        }
+    }
+}
+
 impl From<&Message> for JsMessage {
     fn from(msg: &Message) -> Self {
         Self {
             id: msg.id.get(),
-
-            author: JsUser {
-                id: msg.author.id.get(),
-                username: msg.author.name.clone(),
-            },
-
+            author: JsUser::from(msg),
             content: msg.content.clone(),
         }
     }
 }
 
-impl From<ChannelId> for JsChannel {
-    fn from(id: ChannelId) -> Self {
-        Self { id: id.get() }
+impl From<&Message> for JsChannel {
+    fn from(msg: &Message) -> Self {
+        Self {
+            id: msg.channel_id.get(),
+            name: "".to_string(),
+            is_dm: msg.is_private(),
+        }
     }
 }
 
-impl From<GuildId> for JsGuild {
-    fn from(id: GuildId) -> Self {
-        Self { id: id.get() }
+impl From<&Message> for JsGuild {
+    fn from(msg: &Message) -> Self {
+        let guild_id = msg.guild_id.unwrap_or_default();
+        Self {
+            id: guild_id.get(),
+            name: "".to_string(),
+            owner_id: 0,
+        }
     }
 }
 
@@ -190,7 +270,7 @@ impl ScriptEngine {
         Ok(Self { runtime })
     }
 
-    pub fn execute(&self, script: &str, script_ctx: ScriptContext) -> Result<String> {
+    pub fn execute(&self, script: &str, script_ctx: ScriptContext) -> Result<ScriptOutput> {
         let start = Instant::now();
 
         self.runtime.set_interrupt_handler(Some(Box::new(move || {
@@ -202,7 +282,9 @@ impl ScriptEngine {
         ctx.with(|ctx| {
             self.register_globals(&ctx, &script_ctx)?;
 
-            ctx.eval(script)
+            let result: rquickjs::Value = ctx.eval(script)?;
+
+            parse_output(&ctx, result)
         })
     }
 
@@ -210,12 +292,59 @@ impl ScriptEngine {
         let global = ctx.globals();
 
         let message = JsMessage::from(&script_ctx.message);
+        let channel = JsChannel::from(&script_ctx.message);
+        let guild = JsGuild::from(&script_ctx.message);
 
         global.set("msg", message)?;
         global.set("args", script_ctx.args.clone().unwrap_or_default())?;
-        global.set("channel", JsChannel::from(script_ctx.message.channel_id))?;
-        global.set("guild", JsGuild::from(script_ctx.message.guild_id.unwrap()))?;
+        global.set("channel", channel)?;
+        global.set("guild", guild)?;
+
+        // TODO: Add util object with functions like findUsers, fetchTag, reply
+        // let util_obj = create_util_object(ctx, script_ctx)?;
+        // global.set("util", util_obj)?;
 
         Ok(())
     }
 }
+
+fn parse_output<'js>(_ctx: &Ctx<'js>, value: rquickjs::Value<'js>) -> Result<ScriptOutput> {
+    if value.is_null() || value.is_undefined() {
+        return Ok(ScriptOutput::Text(String::new()));
+    }
+
+    if let Some(s) = value.as_string() {
+        let s_str = s.to_string()?;
+        return Ok(ScriptOutput::Text(s_str));
+    }
+
+    if value.is_object() {
+        // For now, just skip embed detection and convert to string
+        // TODO: Properly deserialize objects as embeds
+    }
+
+    // Default: try to convert to string
+    let str_val = rquickjs::String::from_value(value)
+        .map(|s| s.to_string().unwrap_or_else(|_| "undefined".to_string()))
+        .unwrap_or_else(|_| "undefined".to_string());
+    
+    Ok(ScriptOutput::Text(str_val))
+}
+
+fn is_embed_like(val: &serde_json::Value) -> bool {
+    if let serde_json::Value::Object(obj) = val {
+        obj.contains_key("title")
+            || obj.contains_key("description")
+            || obj.contains_key("color")
+            || obj.contains_key("fields")
+            || obj.contains_key("author")
+            || obj.contains_key("footer")
+            || obj.contains_key("image")
+            || obj.contains_key("thumbnail")
+    } else {
+        false
+    }
+}
+
+// TODO: Utility functions will be added once we understand the rquickjs API better
+// Planned utilities: findUsers(query), fetchTag(name, options), reply(message, embed)

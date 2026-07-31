@@ -7,7 +7,7 @@ use crate::commands::{
     get_prefix, send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo,
 };
 use crate::db::tags::fetch::fetch_tag_resolved;
-use crate::util::script::{ScriptContext, ScriptEngine};
+use crate::util::script::{ScriptContext, ScriptEngine, ScriptOutput};
 use crate::BotState;
 use log::error;
 use serenity::builder::{CreateEmbed, CreateMessage};
@@ -146,10 +146,13 @@ pub async fn execute(ctx: &mut CommandContext) {
                     let engine = ScriptEngine::new()?;
 
                     let script_context = ScriptContext {
+                        message: ctx.msg.clone(),
                         args: ctx.args.clone(),
                         guild_id: ctx.msg.guild_id.unwrap(),
                         channel_id: ctx.msg.channel_id,
                         author_id: ctx.msg.author.id,
+                        serenity_ctx: std::sync::Arc::new(ctx.serenity_ctx.clone()),
+                        db_pool: std::sync::Arc::new(ctx.state.db_pool.clone()),
                     };
 
                     engine.execute(&payload.script, script_context)
@@ -163,9 +166,24 @@ pub async fn execute(ctx: &mut CommandContext) {
                         )
                         .await;
                     }
-                    Ok(output) => {
-                        send_reply_ping_text(ctx, output.to_string().as_str()).await;
-                    }
+                    Ok(output) => match output {
+                        crate::util::script::ScriptOutput::Text(text) => {
+                            if !text.is_empty() {
+                                send_reply_ping_text(ctx, &text).await;
+                            }
+                        }
+                        crate::util::script::ScriptOutput::Embed(embed_json) => {
+                            if let Ok(embed_data) = serde_json::from_value::<EmbedTagContent>(embed_json) {
+                                send_reply_ping_message(
+                                    ctx,
+                                    CreateMessage::new().embed(CreateEmbed::from(embed_data.embed)),
+                                )
+                                .await;
+                            } else {
+                                send_reply_ping_text(ctx, "Failed to parse embed from script output.").await;
+                            }
+                        }
+                    },
                 }
             }
         },
