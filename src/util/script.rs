@@ -50,9 +50,6 @@ pub struct JsUser {
 
     #[qjs(skip_trace)]
     avatar: Option<String>,
-
-    #[qjs(skip_trace)]
-    discriminator: String,
 }
 
 #[rquickjs::methods]
@@ -70,11 +67,6 @@ impl JsUser {
     #[qjs(get)]
     pub fn avatar(&self) -> Option<String> {
         self.avatar.clone()
-    }
-
-    #[qjs(get)]
-    pub fn discriminator(&self) -> String {
-        self.discriminator.clone()
     }
 }
 
@@ -284,17 +276,10 @@ impl From<JsEmbed> for serenity::builder::CreateEmbed {
 
 impl From<&Message> for JsUser {
     fn from(msg: &Message) -> Self {
-        let discriminator = msg
-            .author
-            .discriminator
-            .map(|d| format!("{:04}", d))
-            .unwrap_or_else(|| "0000".to_string());
-
         Self {
             id: msg.author.id.get().to_string(),
             username: msg.author.name.clone(),
             avatar: msg.author.avatar_url(),
-            discriminator,
         }
     }
 }
@@ -352,7 +337,7 @@ impl JsGuild {
                 if let Ok(guild) = serenity_ctx.http.get_guild(guild_id).await {
                     return (guild.name.clone(), guild.owner_id.get().to_string());
                 }
-                ("".to_string(), "0".to_string())
+                ("".to_string(), "".to_string())
             })
         });
 
@@ -660,15 +645,10 @@ fn find_users_impl<'js>(
             if let Some(uid) = parsed_id {
                 if let Ok(user) = serenity_ctx.http.get_user(uid).await {
                     let avatar = user.avatar_url();
-                    let discriminator = user
-                        .discriminator
-                        .map(|d| format!("{:04}", d))
-                        .unwrap_or_else(|| "0000".to_string());
                     results.push(JsUser {
                         id: user.id.get().to_string(),
                         username: user.name,
                         avatar,
-                        discriminator,
                     });
                 }
             } else {
@@ -679,16 +659,10 @@ fn find_users_impl<'js>(
                 {
                     for member in members {
                         let avatar = member.user.avatar_url();
-                        let discriminator = member
-                            .user
-                            .discriminator
-                            .map(|d| format!("{:04}", d))
-                            .unwrap_or_else(|| "0000".to_string());
                         results.push(JsUser {
                             id: member.user.id.get().to_string(),
                             username: member.user.name,
                             avatar,
-                            discriminator,
                         });
                     }
                 }
@@ -738,32 +712,14 @@ fn parse_reply_output<'js>(
         text_val = s.to_string().ok();
         if let Some(e) = arg2 {
             if e.is_object() {
-                if let Ok(json_obj) = ctx.globals().get::<_, rquickjs::Object>("JSON") {
-                    if let Ok(stringify) = json_obj.get::<_, rquickjs::Function>("stringify") {
-                        if let Ok(json_js_str) = stringify.call::<_, rquickjs::String>((e,)) {
-                            if let Ok(json_str) = json_js_str.to_string() {
-                                if let Ok(val) =
-                                    serde_json::from_str::<serde_json::Value>(&json_str)
-                                {
-                                    embed_val = Some(val);
-                                }
-                            }
-                        }
-                    }
+                if let Some(val) = try_parse_embed(ctx, &e) {
+                    embed_val = Some(val);
                 }
             }
         }
     } else if arg1.is_object() {
-        if let Ok(json_obj) = ctx.globals().get::<_, rquickjs::Object>("JSON") {
-            if let Ok(stringify) = json_obj.get::<_, rquickjs::Function>("stringify") {
-                if let Ok(json_js_str) = stringify.call::<_, rquickjs::String>((arg1,)) {
-                    if let Ok(json_str) = json_js_str.to_string() {
-                        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&json_str) {
-                            embed_val = Some(val);
-                        }
-                    }
-                }
-            }
+        if let Some(val) = try_parse_embed(ctx, &arg1) {
+            embed_val = Some(val);
         }
     }
 
@@ -774,6 +730,21 @@ fn parse_reply_output<'js>(
     } else {
         Ok(ScriptOutput::Text(String::new()))
     }
+}
+
+fn try_parse_embed<'js>(ctx: &Ctx<'js>, arg: &rquickjs::Value<'js>) -> Option<serde_json::Value> {
+    if let Ok(json_obj) = ctx.globals().get::<_, rquickjs::Object>("JSON") {
+        if let Ok(stringify) = json_obj.get::<_, rquickjs::Function>("stringify") {
+            if let Ok(json_js_str) = stringify.call::<_, rquickjs::String>((arg,)) {
+                if let Ok(json_str) = json_js_str.to_string() {
+                    if let Ok(val) = serde_json::from_str::<serde_json::Value>(&json_str) {
+                        return Some(val);
+                    }
+                }
+            }
+        }
+    }
+    None
 }
 
 pub struct ScriptEngine {
@@ -858,17 +829,9 @@ fn parse_output<'js>(ctx: &Ctx<'js>, value: rquickjs::Value<'js>) -> Result<Scri
     }
 
     if value.is_object() {
-        if let Ok(json_obj) = ctx.globals().get::<_, rquickjs::Object>("JSON") {
-            if let Ok(stringify) = json_obj.get::<_, rquickjs::Function>("stringify") {
-                if let Ok(json_js_str) = stringify.call::<_, rquickjs::String>((value.clone(),)) {
-                    if let Ok(json_str) = json_js_str.to_string() {
-                        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&json_str) {
-                            if is_embed_like(&val) {
-                                return Ok(ScriptOutput::Embed(val));
-                            }
-                        }
-                    }
-                }
+        if let Some(val) = try_parse_embed(ctx, &value) {
+            if is_embed_like(&val) {
+                return Ok(ScriptOutput::Embed(val));
             }
         }
     }
