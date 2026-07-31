@@ -10,7 +10,7 @@ pub const INFO: CommandInfo = CommandInfo {
     usage: Some("<tag_name> <content>"),
     full_desc: "Create a new tag.",
     short_desc: None,
-    aliases: &[],
+    aliases: &["create"],
     further_help: Some(
         "Creating embed and JS script tags are more in-depth than simple text. For information about how these tags work, use `{PREFIX}help tag script` or `{PREFIX}help tag embed`",
     ),

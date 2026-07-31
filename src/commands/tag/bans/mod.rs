@@ -3,16 +3,22 @@ mod user;
 
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::util::permissions::get_admin_action_msg;
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
+
+const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
+    name: None,
+    description: None,
+    commands: &[&tag::INFO, &user::INFO],
+}];
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag bans",
+    usage: Some("[tag | user]"),
+    full_desc: "List banned tags or users in the server.",
+    short_desc: Some("List tag/user bans."),
     aliases: &[],
     further_help: None,
-    subcommands: None,
+    subcommands: Some(SUBCOMMANDS),
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {

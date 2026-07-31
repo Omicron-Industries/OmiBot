@@ -3,10 +3,10 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::bans::ban_tag;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag ban tag",
+    usage: Some("<tag_name>"),
+    full_desc: "Ban a tag so it can no longer be executed, edited, or deleted.",
+    short_desc: Some("Ban a tag."),
     aliases: &[],
     further_help: None,
     subcommands: None,

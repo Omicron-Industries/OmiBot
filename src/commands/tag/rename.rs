@@ -5,10 +5,10 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::rename_tag;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag rename",
+    usage: Some("<old_name> <new_name>"),
+    full_desc: "Rename an existing tag.",
+    short_desc: Some("Rename a tag."),
     aliases: &[],
     further_help: None,
     subcommands: None,

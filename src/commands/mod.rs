@@ -12,7 +12,6 @@ mod ping;
 mod settings;
 pub(crate) mod tag;
 
-//TODO make sure settings is always in cache
 pub async fn get_prefix(ctx: &CommandContext) -> String {
     ctx.state
         .guild_cache
@@ -69,36 +68,6 @@ impl CommandContext {
     }
 }
 
-// trait ExecutableBranch {
-//     fn parse(ctx: &mut CommandContext) -> BranchParseResult<impl ExecutableBranch>;
-//     async fn execute(self, ctx: &mut CommandContext);
-//     fn resolve(self, ctx: &mut CommandContext);
-// }
-//
-// enum BranchParseResult<T: ExecutableBranch> {
-//     Subcommand(T),
-//     Here,
-//     InvalidArg(String),
-// }
-
-// impl<T: ExecutableBranch> BranchParseResult<T> {
-//     pub async fn resolve(self, ctx: &mut CommandContext) {
-//         match self {
-//             BranchParseResult::Subcommand(s) => {
-//                 BranchParseResult::resolve(T::parse(ctx).await, ctx).await
-//             }
-//             BranchParseResult::Here => T::execute(ctx).await,
-//             BranchParseResult::InvalidArg(s) => send_reply_ping_text(ctx, s.as_str()).await,
-//         }
-//     }
-// }
-
-// enum RootParseResult {
-//     Command(RootCommands),
-//     NoArgs,
-//     InvalidArg(String),
-// }
-
 impl CommandContext {
     pub fn consume_arg(&mut self) -> Option<String> {
         let (first, remaining) = self.parse_next_arg();
@@ -126,43 +95,6 @@ impl CommandContext {
         self.help = true;
     }
 }
-
-// enum RootCommands {
-//     Ping,
-//     Tag,
-//     Eval,
-//     Help,
-// }
-//
-// impl RootCommands {
-//     pub fn parse(ctx: &mut CommandContext) -> RootParseResult {
-//         let (command, new_ctx) = ctx.consume_arg();
-//         match command.as_deref() {
-//             Some("ping") => RootParseResult::Command(RootCommands::Ping),
-//             Some("tag") => RootParseResult::Command(RootCommands::Tag),
-//             Some("eval") => RootParseResult::Command(RootCommands::Eval),
-//             Some("help") => RootParseResult::Command(RootCommands::Help),
-//             None => RootParseResult::NoArgs,
-//             Some(arg) => RootParseResult::InvalidArg(arg.to_string()),
-//         }
-//     }
-// }
-//
-// impl RootParseResult {
-//     pub async fn resolve(self, ctx: &mut CommandContext) {
-//         match self {
-//             RootParseResult::Command(RootCommands::Ping) => {}
-//             RootParseResult::Command(RootCommands::Tag) => {}
-//             RootParseResult::Command(RootCommands::Eval) => {}
-//             RootParseResult::Command(RootCommands::Help) => {}
-//             RootParseResult::NoArgs => send_reply_ping_text(ctx, "Expected a command!").await,
-//             RootParseResult::InvalidArg(arg) => {
-//                 send_reply_ping_text(ctx, format!("`{}` is not a valid command!", arg).as_str())
-//                     .await
-//             }
-//         }
-//     }
-// }
 
 pub struct CommandInfo {
     pub command: &'static str,

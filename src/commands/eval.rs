@@ -6,16 +6,21 @@ use serenity::builder::{CreateEmbed, CreateMessage};
 
 pub const INFO: CommandInfo = CommandInfo {
     command: "eval",
-    usage: Some("`​`​`js\n<code>\n`​`​`"),
+    usage: Some("<script_content>"),
     full_desc: "Evaluates JavaScript code in the bot's script environment.",
     short_desc: Some("Evaluates JS code."),
     aliases: &[],
-    further_help: None,
+    further_help: Some(
+        "Script content can be passed as raw text, inline backticks, or a JS codeblock:\n`{PREFIX}eval 6+4`\n`{PREFIX}eval `​`​`js\n<script_content>\n`​`​`",
+    ),
     subcommands: None,
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
     if ctx.help {
+        return command_help(ctx, INFO).await;
+    }
+    if ctx.peek_arg() == Some("help".to_string()) {
         return command_help(ctx, INFO).await;
     }
     execute(ctx).await;
@@ -91,10 +96,17 @@ fn clean_code(raw: &str) -> &str {
     let mut s = raw.trim();
     if let Some(stripped) = s.strip_prefix("```js") {
         s = stripped;
+    } else if let Some(stripped) = s.strip_prefix("```javascript") {
+        s = stripped;
     } else if let Some(stripped) = s.strip_prefix("```") {
         s = stripped;
+    } else if let Some(stripped) = s.strip_prefix('`') {
+        s = stripped;
     }
+
     if let Some(stripped) = s.strip_suffix("```") {
+        s = stripped;
+    } else if let Some(stripped) = s.strip_suffix('`') {
         s = stripped;
     }
     s.trim()

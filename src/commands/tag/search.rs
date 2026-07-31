@@ -3,10 +3,10 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::search::search_tags;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag search",
+    usage: Some("<query>"),
+    full_desc: "Search for tags matching a query string.",
+    short_desc: Some("Search for tags."),
     aliases: &[],
     further_help: None,
     subcommands: None,

@@ -5,10 +5,10 @@ use crate::db::tags::bans::ban_user;
 use serenity::all::UserId;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag ban user",
+    usage: Some("<user>"),
+    full_desc: "Ban a user from creating or editing tags.",
+    short_desc: Some("Ban a user from tags."),
     aliases: &[],
     further_help: None,
     subcommands: None,

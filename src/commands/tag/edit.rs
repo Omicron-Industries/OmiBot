@@ -7,12 +7,14 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::{edit_tag_content, EditTagError};
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag edit",
+    usage: Some("<tag_name> <content>"),
+    full_desc: "Edit the content of an existing tag.",
+    short_desc: Some("Edit a tag's content."),
     aliases: &[],
-    further_help: None,
+    further_help: Some(
+        "Creating embed and JS script tags are more in-depth than simple text. For information about how these tags work, use `{PREFIX}help tag script` or `{PREFIX}help tag embed`",
+    ),
     subcommands: None,
 };
 

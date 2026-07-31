@@ -3,10 +3,10 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::bans::unban_tag;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag unban tag",
+    usage: Some("<tag_name>"),
+    full_desc: "Unban a tag so it can be used, edited, and deleted again.",
+    short_desc: Some("Unban a tag."),
     aliases: &[],
     further_help: None,
     subcommands: None,

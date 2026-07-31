@@ -4,7 +4,8 @@ use crate::commands::tag::util::script::ScriptTagContent;
 use crate::commands::tag::util::text::TextTagContent;
 use crate::commands::tag::util::TagKind;
 use crate::commands::{
-    get_prefix, send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo,
+    get_prefix, send_reply_ping_message, send_reply_ping_text, CommandCategory, CommandContext,
+    CommandInfo,
 };
 use crate::db::tags::fetch::fetch_tag_resolved;
 use crate::util::script::{ScriptContext, ScriptEngine, ScriptOutput};
@@ -28,22 +29,46 @@ mod search;
 mod unban;
 pub(crate) mod util;
 
+const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
+    &CommandCategory {
+        name: Some("Commands"),
+        description: None,
+        commands: &[
+            &add::INFO,
+            &edit::INFO,
+            &delete::INFO,
+            &rename::INFO,
+            &alias::INFO,
+            &info::INFO,
+            &raw::INFO,
+            &list::INFO,
+            &search::INFO,
+            &chown::INFO,
+        ],
+    },
+    &CommandCategory {
+        name: Some("Admin"),
+        description: None,
+        commands: &[&ban::INFO, &unban::INFO, &bans::INFO],
+    },
+];
+
 pub const INFO: CommandInfo = CommandInfo {
     command: "tag",
     usage: Some("(<tag_name> | <subcommand>)"),
-    full_desc: "",
-    short_desc: Some(""),
+    full_desc: "Execute a tag or manage server tags.",
+    short_desc: Some("Manage and execute tags."),
     aliases: &["t"],
     further_help: Some(
         "Creating embed and JS script tags are more in-depth than simple text. For information about how these tags work, use `{PREFIX}help tag script` or `{PREFIX}help tag embed`",
     ),
-    subcommands: None,
+    subcommands: Some(SUBCOMMANDS),
 };
 
 /// All names for the tag command reserved for subcommands, prohibited from being made into a tag.
 pub const TAG_SUBCOMMANDS: &[&str] = &[
     "add", "create", "edit", "delete", "del", "alias", "info", "owner", "raw", "list", "search",
-    "chown", "transfer", "ban", "unban", "bans", "help",
+    "chown", "transfer", "ban", "unban", "bans", "help", "script", "embed", "text",
 ];
 
 pub async fn dispatch(ctx: &mut CommandContext) {
@@ -70,6 +95,8 @@ pub async fn dispatch(ctx: &mut CommandContext) {
                 _ => command_help(ctx, INFO).await,
             }
         }
+        Some("script") if ctx.help => help_script(ctx).await,
+        Some("embed") if ctx.help => help_embed(ctx).await,
 
         _ if ctx.help => command_help(ctx, INFO).await,
         Some(_) => execute(&mut orig_ctx).await,
@@ -172,27 +199,36 @@ pub async fn execute(ctx: &mut CommandContext) {
                         .await;
                     }
                     Ok(output) => match output {
-                        crate::util::script::ScriptOutput::Text(text) => {
+                        ScriptOutput::Text(text) => {
                             if !text.is_empty() {
                                 send_reply_ping_text(ctx, &text).await;
                             }
                         }
-                        crate::util::script::ScriptOutput::Embed(embed_json) => {
+                        ScriptOutput::Embed(embed_json) => {
                             let inner_json = embed_json.get("embed").unwrap_or(&embed_json);
-                            if let Ok(js_embed) = serde_json::from_value::<crate::util::script::JsEmbed>(inner_json.clone()) {
+                            if let Ok(js_embed) = serde_json::from_value::<
+                                crate::util::script::JsEmbed,
+                            >(inner_json.clone())
+                            {
                                 send_reply_ping_message(
                                     ctx,
                                     CreateMessage::new().embed(CreateEmbed::from(js_embed)),
                                 )
                                 .await;
-                            } else if let Ok(embed_data) = serde_json::from_value::<EmbedTagContent>(embed_json) {
+                            } else if let Ok(embed_data) =
+                                serde_json::from_value::<EmbedTagContent>(embed_json)
+                            {
                                 send_reply_ping_message(
                                     ctx,
                                     CreateMessage::new().embed(CreateEmbed::from(embed_data.embed)),
                                 )
                                 .await;
                             } else {
-                                send_reply_ping_text(ctx, "Failed to parse embed from script output.").await;
+                                send_reply_ping_text(
+                                    ctx,
+                                    "Failed to parse embed from script output.",
+                                )
+                                .await;
                             }
                         }
                     },

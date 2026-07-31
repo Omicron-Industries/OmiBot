@@ -7,11 +7,11 @@ use serenity::all::{GuildId, UserId};
 use sqlx::PgPool;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
-    aliases: &[],
+    command: "tag info",
+    usage: Some("<tag_name>"),
+    full_desc: "Display information about a tag, including owner and timestamps.",
+    short_desc: Some("Get tag information."),
+    aliases: &["owner"],
     further_help: None,
     subcommands: None,
 };

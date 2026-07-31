@@ -5,10 +5,10 @@ use crate::db::tags::bans::unban_user;
 use serenity::all::UserId;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag unban user",
+    usage: Some("<user>"),
+    full_desc: "Unban a user so they can create and edit tags again.",
+    short_desc: Some("Unban a user from tags."),
     aliases: &[],
     further_help: None,
     subcommands: None,

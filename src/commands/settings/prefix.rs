@@ -3,10 +3,10 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::settings::set_prefix;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "settings prefix",
+    usage: Some("<prefix>"),
+    full_desc: "Set the bot's command prefix for the server. Prefix must be a single character.",
+    short_desc: Some("Set the server command prefix."),
     aliases: &[],
     further_help: None,
     subcommands: None,

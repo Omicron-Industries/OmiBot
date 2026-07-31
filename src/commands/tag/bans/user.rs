@@ -3,10 +3,10 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::bans::list_banned_users;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag bans user",
+    usage: None,
+    full_desc: "List all banned users in the server.",
+    short_desc: Some("List banned users."),
     aliases: &[],
     further_help: None,
     subcommands: None,

@@ -5,11 +5,11 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::change_tag_owner;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
-    aliases: &[],
+    command: "tag chown",
+    usage: Some("<tag_name> <user>"),
+    full_desc: "Transfer ownership of a tag to another user.",
+    short_desc: Some("Transfer tag ownership."),
+    aliases: &["transfer"],
     further_help: None,
     subcommands: None,
 };

@@ -9,10 +9,10 @@ use log::error;
 use serenity::all::{CreateAttachment, CreateMessage};
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag raw",
+    usage: Some("<tag_name>"),
+    full_desc: "Get the unformatted raw content of a tag sent as a file attachment.",
+    short_desc: Some("Get raw tag content."),
     aliases: &[],
     further_help: None,
     subcommands: None,

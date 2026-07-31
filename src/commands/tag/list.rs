@@ -4,10 +4,10 @@ use crate::commands::tag::util::get_uid_from_user_text;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag list",
+    usage: Some("[user]"),
+    full_desc: "List all tags owned by yourself or a specified user.",
+    short_desc: Some("List tags owned by a user."),
     aliases: &[],
     further_help: None,
     subcommands: None,

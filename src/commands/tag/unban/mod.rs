@@ -6,16 +6,22 @@ use crate::commands::tag::unban::tag::execute_unban_tag;
 use crate::commands::tag::unban::user::execute_unban_user;
 use crate::commands::tag::util::get_uid_from_user_text;
 use crate::commands::tag::util::permissions::get_admin_action_msg;
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
+
+const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
+    name: None,
+    description: None,
+    commands: &[&tag::INFO, &user::INFO],
+}];
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
+    command: "tag unban",
+    usage: Some("(<tag_name> | <user> | <subcommand>)"),
+    full_desc: "Unban a tag or user.",
+    short_desc: None,
     aliases: &[],
     further_help: None,
-    subcommands: None,
+    subcommands: Some(SUBCOMMANDS),
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {

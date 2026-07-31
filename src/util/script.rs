@@ -873,9 +873,15 @@ fn parse_output<'js>(ctx: &Ctx<'js>, value: rquickjs::Value<'js>) -> Result<Scri
         }
     }
 
-    let str_val = rquickjs::String::from_value(value)
-        .map(|s| s.to_string().unwrap_or_else(|_| "undefined".to_string()))
-        .unwrap_or_else(|_| "undefined".to_string());
+    let str_val = if let Ok(string_fn) = ctx.globals().get::<_, rquickjs::Function>("String") {
+        if let Ok(res) = string_fn.call::<_, rquickjs::String>((value,)) {
+            res.to_string().unwrap_or_else(|_| "undefined".to_string())
+        } else {
+            "undefined".to_string()
+        }
+    } else {
+        "undefined".to_string()
+    };
 
     Ok(ScriptOutput::Text(str_val))
 }

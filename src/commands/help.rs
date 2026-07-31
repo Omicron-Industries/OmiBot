@@ -11,7 +11,7 @@ pub async fn command_help(ctx: &CommandContext, cmd_info: CommandInfo) {
         sub_list.map(|s| format!("\n\n{}", s)).unwrap_or_default(),
         cmd_info
             .further_help
-            .map(|s| format!("\n\n\n{}", s).replace("{PREFIX}", &prefix))
+            .map(|s| format!("\n\n{}", s).replace("{PREFIX}", &prefix))
             .unwrap_or_default(),
     );
     send_reply_ping_text(ctx, &content).await;

@@ -4,11 +4,11 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::delete_tag;
 
 pub const INFO: CommandInfo = CommandInfo {
-    command: "",
-    usage: Some(""),
-    full_desc: "",
-    short_desc: Some(""),
-    aliases: &[],
+    command: "tag delete",
+    usage: Some("<tag_name>"),
+    full_desc: "Delete a tag.",
+    short_desc: None,
+    aliases: &["del"],
     further_help: None,
     subcommands: None,
 };
