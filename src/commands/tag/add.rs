@@ -1,5 +1,6 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
+use crate::commands::tag::util::embed::parse_embed_tag_content;
 use crate::commands::tag::util::script::ScriptTagContent;
 use crate::commands::tag::util::text::TextTagContent;
 use crate::commands::tag::util::{try_create_tag, CreateTagModel, TagPayload};
@@ -37,21 +38,32 @@ pub async fn execute(ctx: &mut CommandContext) {
         Some(err_msg) => send_reply_ping_text(ctx, err_msg.as_str()).await,
         None => {
             let arg = ctx.args.clone().unwrap_or_default();
+            let trimmed = arg.trim();
 
-            let payload: TagPayload =
-                if let Some(inner) = arg.strip_prefix("```").and_then(|s| s.strip_suffix("```")) {
-                    let inner = inner
-                        .strip_prefix("js")
-                        .map(str::trim_start)
-                        .unwrap_or(inner);
+            let payload: TagPayload = if let Some(embed_content) = parse_embed_tag_content(&arg) {
+                match embed_content {
+                    Ok(embed_tag_content) => TagPayload::Embed(embed_tag_content),
+                    Err(msg) => return send_reply_ping_text(ctx, &msg).await,
+                }
+            } else if trimmed.starts_with("```json") || trimmed.starts_with("```embed") {
+                return send_reply_ping_text(
+                    ctx,
+                    "Failed to parse embed JSON. Please verify that the JSON formatting is valid.",
+                )
+                .await;
+            } else if let Some(inner) = arg.strip_prefix("```").and_then(|s| s.strip_suffix("```"))
+            {
+                let inner = inner
+                    .strip_prefix("js")
+                    .map(str::trim_start)
+                    .unwrap_or(inner);
 
-                    TagPayload::Script(ScriptTagContent {
-                        script: inner.to_string(),
-                    })
-                } else {
-                    TagPayload::Text(TextTagContent { content: arg })
-                };
-            // TODO: Add embed support
+                TagPayload::Script(ScriptTagContent {
+                    script: inner.to_string(),
+                })
+            } else {
+                TagPayload::Text(TextTagContent { content: arg })
+            };
 
             try_create_tag(ctx, CreateTagModel::with_ctx(&ctx, &name, payload)).await
         }

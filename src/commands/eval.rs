@@ -1,5 +1,7 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::embed::EmbedTagContent;
+use crate::commands::tag::util::embed::{
+    try_handle_embed_tag, EmbedTagContent,
+};
 use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo};
 use crate::util::script::{JsEmbed, ScriptContext, ScriptEngine, ScriptOutput};
 use serenity::builder::{CreateEmbed, CreateMessage};
@@ -7,11 +9,11 @@ use serenity::builder::{CreateEmbed, CreateMessage};
 pub const INFO: CommandInfo = CommandInfo {
     command: "eval",
     usage: Some("<script_content>"),
-    full_desc: "Evaluates JavaScript code in the bot's script environment.",
-    short_desc: Some("Evaluates JS code."),
+    full_desc: "Evaluates JavaScript code or renders embed JSON in the bot's script environment.",
+    short_desc: Some("Evaluates JS code or renders embed JSON."),
     aliases: &[],
     further_help: Some(
-        "Script content can be passed as raw text, inline backticks, or a JS codeblock:\n`{PREFIX}eval 6+4`\n`{PREFIX}eval `​`​`js\n<script_content>\n`​`​`",
+        "Script content can be passed as raw text, inline backticks, a JS codeblock, or JSON/embed block:\n`{PREFIX}eval 6+4`\n`{PREFIX}eval `​`​`json\n{\"title\": \"My Embed\"}\n`​`​`",
     ),
     subcommands: None,
 };
@@ -30,6 +32,10 @@ pub async fn execute(ctx: &CommandContext) {
     let Some(raw_code) = &ctx.args else {
         return command_usage(ctx, INFO).await;
     };
+
+    if try_handle_embed_tag(ctx, raw_code).await {
+        return;
+    }
 
     let code = clean_code(raw_code);
     if code.is_empty() {

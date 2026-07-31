@@ -92,3 +92,54 @@ pub async fn get_tag_editable_info(
     .fetch_optional(db)
     .await
 }
+
+pub async fn add_admin(uid: UserId, gid: GuildId, db: &PgPool) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO admins (guild_id, member_id)
+        VALUES ($1, $2)
+        ON CONFLICT (guild_id, member_id) DO NOTHING
+        "#,
+        gid.db_id(),
+        uid.db_id(),
+    )
+    .execute(db)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
+}
+
+pub async fn remove_admin(uid: UserId, gid: GuildId, db: &PgPool) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM admins
+        WHERE guild_id = $1
+          AND member_id = $2
+        "#,
+        gid.db_id(),
+        uid.db_id(),
+    )
+    .execute(db)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
+}
+
+pub async fn list_admins(gid: GuildId, db: &PgPool) -> Result<Vec<UserId>, sqlx::Error> {
+    let admins = sqlx::query!(
+        r#"
+        SELECT member_id
+        FROM admins
+        WHERE guild_id = $1
+        ORDER BY t_created ASC
+        "#,
+        gid.db_id(),
+    )
+    .fetch_all(db)
+    .await?;
+
+    Ok(admins
+        .into_iter()
+        .map(|admin| UserId::new(admin.member_id as u64))
+        .collect())
+}

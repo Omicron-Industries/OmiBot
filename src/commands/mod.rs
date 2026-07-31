@@ -6,6 +6,7 @@ use rquickjs::Ctx;
 use serenity::all::{Context, CreateAllowedMentions, CreateMessage, GuildId, Message, UserId};
 use std::sync::Arc;
 
+mod admins;
 mod eval;
 mod help;
 mod ping;
@@ -25,10 +26,10 @@ pub async fn get_prefix(ctx: &CommandContext) -> String {
 
 #[derive(Clone)]
 pub struct CommandContext {
-    serenity_ctx: Context,
-    msg: Message,
+    pub(crate) serenity_ctx: Context,
+    pub(crate) msg: Message,
     args: Option<String>,
-    state: Arc<BotState>,
+    pub(crate) state: Arc<BotState>,
     help: bool,
 }
 
@@ -122,7 +123,10 @@ pub async fn send_reply_ping_text(ctx: &CommandContext, content: &str) {
     }
 }
 
-pub async fn send_reply_ping_message(ctx: &CommandContext, msg: CreateMessage) {
+pub async fn send_reply_ping_message(
+    ctx: &CommandContext,
+    msg: CreateMessage,
+) -> Result<(), String> {
     let message = msg
         .allowed_mentions(CreateAllowedMentions::new().replied_user(true))
         .reference_message(&ctx.msg);
@@ -134,7 +138,9 @@ pub async fn send_reply_ping_message(ctx: &CommandContext, msg: CreateMessage) {
         .await
     {
         error!("Error sending message: {:?}", e);
+        return Err(format!("Error sending message: {:?}", e));
     }
+    Ok(())
 }
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
@@ -146,7 +152,7 @@ const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
     &CommandCategory {
         name: Some("Admin"),
         description: None,
-        commands: &[&settings::INFO],
+        commands: &[&settings::INFO, &admins::INFO],
     },
 ];
 
@@ -175,6 +181,7 @@ pub async fn dispatch(ctx: &mut CommandContext) {
         Some("tag") | Some("t") => tag::dispatch(ctx).await,
         Some("eval") => eval::dispatch(ctx).await,
         Some("settings") => settings::dispatch(ctx).await,
+        Some("admins") | Some("admin") => admins::dispatch(ctx).await,
         None if ctx.help => help::execute(ctx).await,
         _ => help::execute(ctx).await,
     }

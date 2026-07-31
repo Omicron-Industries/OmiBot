@@ -4,9 +4,10 @@ mod user;
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::ban::tag::execute_ban_tag;
 use crate::commands::tag::ban::user::execute_ban_user;
+use crate::commands::tag::bans;
 use crate::commands::tag::util::get_uid_from_user_text;
-use crate::commands::tag::util::permissions::get_admin_action_msg;
 use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
+use crate::util::permissions::get_admin_action_msg;
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
     name: None,
@@ -34,6 +35,7 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     match command.as_deref() {
         Some("tag") => tag::dispatch(ctx).await,
         Some("user") => user::dispatch(ctx).await,
+        Some("list") => bans::dispatch(ctx).await,
         Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
         _ => execute(&mut orig_ctx).await,
     }

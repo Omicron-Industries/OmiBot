@@ -206,23 +206,16 @@ pub async fn execute(ctx: &mut CommandContext) {
                         }
                         ScriptOutput::Embed(embed_json) => {
                             let inner_json = embed_json.get("embed").unwrap_or(&embed_json);
+
                             if let Ok(js_embed) = serde_json::from_value::<
                                 crate::util::script::JsEmbed,
                             >(inner_json.clone())
                             {
-                                send_reply_ping_message(
-                                    ctx,
-                                    CreateMessage::new().embed(CreateEmbed::from(js_embed)),
-                                )
-                                .await;
+                                send_embed_reply(ctx, CreateEmbed::from(js_embed)).await;
                             } else if let Ok(embed_data) =
                                 serde_json::from_value::<EmbedTagContent>(embed_json)
                             {
-                                send_reply_ping_message(
-                                    ctx,
-                                    CreateMessage::new().embed(CreateEmbed::from(embed_data.embed)),
-                                )
-                                .await;
+                                send_embed_reply(ctx, CreateEmbed::from(embed_data.embed)).await;
                             } else {
                                 send_reply_ping_text(
                                     ctx,
@@ -235,6 +228,12 @@ pub async fn execute(ctx: &mut CommandContext) {
                 }
             }
         },
+    }
+}
+
+async fn send_embed_reply(ctx: &CommandContext, embed: CreateEmbed) {
+    if let Err(e) = send_reply_ping_message(ctx, CreateMessage::new().embed(embed)).await {
+        send_reply_ping_text(ctx, format!("Embed invalid: {}", e).as_str()).await;
     }
 }
 

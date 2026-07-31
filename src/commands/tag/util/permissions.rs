@@ -1,6 +1,5 @@
 use crate::commands::CommandContext;
-use crate::db::permissions::{get_tag_editable_info, is_admin};
-
+use crate::db::permissions::get_tag_editable_info;
 pub async fn get_tag_edit_permissions_msg(ctx: &CommandContext, tag_name: &str) -> Option<String> {
     let info_query = get_tag_editable_info(
         ctx.get_guild_id(),
@@ -27,18 +26,10 @@ pub async fn get_tag_edit_permissions_msg(ctx: &CommandContext, tag_name: &str) 
             }
             if !info.tag_enabled {
                 return Some(format!(
-                    "The tag **{tag_name}** is banned, meaning it cannot be edited (by a non-admin)"
+                    "The tag **{tag_name}** is banned, meaning it cannot be edited (by a non-admins)"
                 ));
             }
             None
         }
-    }
-}
-
-pub async fn get_admin_action_msg(ctx: &CommandContext) -> Option<String> {
-    match is_admin(ctx.get_author_id(), ctx.get_guild_id(), &ctx.state.db_pool).await {
-        Err(e) => Some(format!("Failed to retrieve admin status: {:?}", e)),
-        Ok(false) => Some("This command required admin permissions to execute!".to_string()),
-        _ => None,
     }
 }
