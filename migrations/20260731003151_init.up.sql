@@ -1,4 +1,14 @@
-create type tag_kind as enum ('text', 'alias', 'embed', 'script');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_type
+        WHERE typname = 'tag_kind'
+    ) THEN
+CREATE TYPE tag_kind AS ENUM ('text', 'alias', 'embed', 'script');
+END IF;
+END
+$$;
 
 create table if not exists admins
 (
@@ -75,4 +85,9 @@ create table if not exists bans
     );
 
 comment on table bans is 'user bans';
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX IF NOT EXISTS tags_name_trgm_idx
+    ON tags USING gin (name gin_trgm_ops);
 

@@ -25,7 +25,12 @@ pub async fn dispatch(ctx: &mut CommandContext) {
 pub async fn execute(ctx: &mut CommandContext) {
     match ctx.consume_arg() {
         None => {
-            get_users_tags_msg(ctx.get_guild_id(), ctx.get_author_id(), &ctx.state.db_pool).await;
+            send_reply_ping_text(
+                ctx,
+                &get_users_tags_msg(ctx.get_guild_id(), ctx.get_author_id(), &ctx.state.db_pool)
+                    .await,
+            )
+            .await;
         }
         Some(arg) => {
             let uid = match get_uid_from_user_text(&arg) {
@@ -34,7 +39,11 @@ pub async fn execute(ctx: &mut CommandContext) {
                     return send_reply_ping_text(ctx, "Expected a user as an argument!").await;
                 }
             };
-            get_users_tags_msg(ctx.get_guild_id(), uid, &ctx.state.db_pool).await;
+            send_reply_ping_text(
+                ctx,
+                &get_users_tags_msg(ctx.get_guild_id(), uid, &ctx.state.db_pool).await,
+            )
+            .await;
         }
     }
 }
