@@ -1,12 +1,13 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::util::embed::EmbedTagContent;
-use crate::commands::tag::util::script::{ScriptContext, ScriptEngine, ScriptTagContent};
+use crate::commands::tag::util::script::ScriptTagContent;
 use crate::commands::tag::util::text::TextTagContent;
 use crate::commands::tag::util::TagKind;
 use crate::commands::{
     get_prefix, send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo,
 };
 use crate::db::tags::fetch::fetch_tag_resolved;
+use crate::util::script::{ScriptContext, ScriptEngine};
 use crate::BotState;
 use log::error;
 use serenity::builder::{CreateEmbed, CreateMessage};
