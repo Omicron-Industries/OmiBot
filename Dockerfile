@@ -1,4 +1,4 @@
-FROM rust:1.88-bullseye as builder
+FROM rust:1.94-bullseye as builder
 
 RUN apt update && apt upgrade -y && apt install clang -y
 
@@ -12,7 +12,7 @@ ENV SQLX_OFFLINE=true
 # Build the app
 RUN cargo build --release
 
-FROM rust:1.88-bullseye as runner
+FROM rust:1.94-bullseye as runner
 
 # Copy the server binary to the /app directory
 COPY --from=builder /app/target/release/omibot /app/
