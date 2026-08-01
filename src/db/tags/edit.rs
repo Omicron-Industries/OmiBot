@@ -1,5 +1,5 @@
 use crate::db::DbId;
-use crate::util::tag::TagPayload;
+use crate::util::tag::{TagKind, TagPayload};
 use log::error;
 use serenity::all::{GuildId, UserId};
 use sqlx::{Error, PgPool};
@@ -63,7 +63,7 @@ pub async fn edit_tag_content(
     payload: TagPayload,
     db: &PgPool,
 ) -> Result<bool, EditTagError> {
-    let serialized_payload = match serde_json::to_value(payload) {
+    let serialized_payload = match serde_json::to_value(&payload) {
         Ok(payload) => payload,
         Err(e) => {
             error!("Failed to serialize tag payload: {}", e);
@@ -75,6 +75,7 @@ pub async fn edit_tag_content(
         r#"
         UPDATE tags
         SET payload = $3,
+            kind = $4,
             t_updated = CURRENT_TIMESTAMP
         WHERE guild_id = $1
           AND name = $2
@@ -82,6 +83,7 @@ pub async fn edit_tag_content(
         gid.db_id(),
         tag_name,
         serialized_payload,
+        TagKind::from_payload(&payload) as TagKind,
     )
     .execute(db)
     .await

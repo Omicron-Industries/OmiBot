@@ -136,6 +136,8 @@ To create a script tag, the content of the tag must be a multi-line JS code bloc
 `​`​`
 ```
 
+You can also upload a `.js` file.
+
 The String `args` is made available at the start of the script, containing all message content after the tag name.
 For a full API reference, see [here](https://github.com/Omicron-Industries/OmiBot/docs/api.md)."#
     );

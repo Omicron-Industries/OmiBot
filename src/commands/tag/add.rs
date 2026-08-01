@@ -4,7 +4,7 @@ use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::util::tag::embed::parse_embed_tag_content;
 use crate::util::tag::script::ScriptTagContent;
 use crate::util::tag::text::TextTagContent;
-use crate::util::tag::{try_create_tag, CreateTagModel, TagPayload};
+use crate::util::tag::{add_attachments_to_args, try_create_tag, CreateTagModel, TagPayload};
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag add",
@@ -32,6 +32,11 @@ pub async fn execute(ctx: &mut CommandContext, detect: bool) {
     let Some(name) = ctx.consume_arg() else {
         return command_usage(ctx, INFO).await;
     };
+    if let Err(e) = add_attachments_to_args(ctx).await {
+        send_reply_ping_text(ctx, &format!("Error adding attachments: {}", e)).await;
+        return;
+    }
+
     if ctx.args.is_none() {
         return command_usage(ctx, INFO).await;
     }

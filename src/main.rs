@@ -91,12 +91,12 @@ impl EventHandler for Bot {
         let content = content.trim_start_matches(&settings.prefix).to_string();
 
         let mut cmd_ctx = CommandContext::new(ctx, msg, Some(content), self.state.clone(), false);
-        if cmd_ctx.msg.content.starts_with(&settings.prefix) {
-            commands::dispatch(&mut cmd_ctx).await;
-        } else {
-            if cmd_ctx.msg.author.id.get().to_string()
-                != env::var("APPLICATION_ID").expect("APPLICATION_ID must be set")
-            {
+        if cmd_ctx.msg.author.id.get().to_string()
+            != env::var("APPLICATION_ID").expect("APPLICATION_ID must be set")
+        {
+            if cmd_ctx.msg.content.starts_with(&settings.prefix) {
+                commands::dispatch(&mut cmd_ctx).await;
+            } else {
                 match self
                     .state
                     .guild_cache

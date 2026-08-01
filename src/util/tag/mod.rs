@@ -7,7 +7,7 @@ use crate::util::tag::script::ScriptTagContent;
 use crate::util::tag::text::TextTagContent;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use serenity::all::{Message, UserId};
+use serenity::all::{Attachment, Message, UserId};
 use sqlx::types::chrono;
 use std::num::ParseIntError;
 
@@ -137,4 +137,92 @@ pub fn get_uid_from_user_text(text: &str) -> Result<UserId, ParseIntError> {
         .trim_end_matches('>')
         .parse::<u64>()
         .map(UserId::new)
+}
+
+pub async fn add_attachments_to_args(ctx: &mut CommandContext) -> Result<(), String> {
+    let had_args = ctx.args.is_some();
+
+    let mut txt_md = None;
+    let mut js = None;
+    let mut other = Vec::new();
+
+    for attachment in &ctx.msg.attachments {
+        match attachment.content_type.as_deref() {
+            Some("text/plain; charset=utf-8") | Some("text/markdown; charset=utf-8") => {
+                println!("found text/markdown");
+                if txt_md.is_some() {
+                    return Err("Only one text/markdown attachment is allowed.".into());
+                }
+                txt_md = Some(attachment);
+            }
+            Some("text/javascript; charset=utf-8") | Some("application/json; charset=utf-8") => {
+                if js.is_some() {
+                    return Err("Only one JavaScript/JSON attachment is allowed.".into());
+                }
+                js = Some(attachment);
+            }
+            _ => other.push(attachment),
+        }
+    }
+
+    if let Some(js_attachment) = js {
+        if txt_md.is_some() || !other.is_empty() {
+            return Err(
+                "A JavaScript/JSON attachment cannot be combined with any other attachments."
+                    .into(),
+            );
+        }
+
+        if had_args {
+            return Err("A JavaScript/JSON attachment requires no command arguments.".into());
+        }
+
+        let contents = read_attachment(js_attachment).await?;
+        ctx.args = if js_attachment.content_type == Some("text/javascript; charset=utf-8".into()) {
+            Some(format!("```js\n{}\n```", contents))
+        } else {
+            Some(format!("```json\n{}\n```", contents))
+        };
+        return Ok(());
+    }
+
+    if txt_md.is_some() && had_args {
+        return Err("A text/markdown attachment requires no command arguments.".into());
+    }
+
+    if let Some(text_attachment) = txt_md {
+        let contents = read_attachment(text_attachment).await?;
+        println!("{}", contents);
+        ctx.args = Some(contents);
+    }
+
+    // Append other attachment URLs
+    for attachment in other {
+        if ctx.args.is_none() {
+            ctx.args = Some(String::new());
+        }
+
+        let args = ctx.args.as_mut().unwrap();
+
+        if !args.is_empty() {
+            args.push('\n');
+        }
+
+        args.push_str(&attachment.url);
+    }
+
+    Ok(())
+}
+
+pub async fn read_attachment(attachment: &Attachment) -> Result<String, String> {
+    let response = reqwest::get(&attachment.url)
+        .await
+        .map_err(|e| format!("Failed to fetch attachment: {}", e))?;
+
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| format!("Failed to read attachment bytes: {}", e))?;
+
+    String::from_utf8(bytes.to_vec()).map_err(|e| format!("Attachment is not valid UTF-8: {}", e))
 }

@@ -2,6 +2,7 @@ use crate::commands::help::{command_help, command_usage};
 use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo};
 use crate::util::script::{JsEmbed, ScriptContext, ScriptEngine, ScriptOutput};
 use crate::util::tag::embed::{try_handle_embed_tag, EmbedTagContent};
+use crate::util::tag::read_attachment;
 use serenity::builder::{CreateEmbed, CreateMessage};
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -11,7 +12,7 @@ pub const INFO: &'static CommandInfo = &CommandInfo {
     short_desc: Some("Evaluates JS code or renders embed JSON."),
     aliases: &[],
     further_help: Some(
-        "Script content can be passed as raw text, inline backticks, a JS codeblock, or JSON/embed block:\n`{PREFIX}eval 6+4`\n`{PREFIX}eval `​`​`json\n{\"title\": \"My Embed\"}\n`​`​`",
+        "Script content can be passed as raw text, inline backticks, a JS code block, or JSON/embed block, or a file:\n`{PREFIX}eval 6+4`\n```{PREFIX}eval `​`​`json\n{\"title\": \"My Embed\"}\n`​`​`\n```",
     ),
     subcommands: None,
 };
@@ -26,7 +27,11 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     execute(ctx).await;
 }
 
-pub async fn execute(ctx: &CommandContext) {
+pub async fn execute(ctx: &mut CommandContext) {
+    match add_js_attachment_to_args(ctx).await {
+        Ok(_) => {}
+        Err(e) => send_reply_ping_text(ctx, &e).await,
+    }
     let Some(raw_code) = &ctx.args else {
         return command_usage(ctx, INFO).await;
     };
@@ -102,6 +107,8 @@ fn clean_code(raw: &str) -> &str {
         s = stripped;
     } else if let Some(stripped) = s.strip_prefix("```javascript") {
         s = stripped;
+    } else if let Some(stripped) = s.strip_prefix("```json") {
+        s = stripped;
     } else if let Some(stripped) = s.strip_prefix("```") {
         s = stripped;
     } else if let Some(stripped) = s.strip_prefix('`') {
@@ -114,4 +121,37 @@ fn clean_code(raw: &str) -> &str {
         s = stripped;
     }
     s.trim()
+}
+
+pub async fn add_js_attachment_to_args(ctx: &mut CommandContext) -> Result<(), String> {
+    let js_attachment = ctx.msg.attachments.iter().find(|a| {
+        a.content_type.as_deref() == Some("text/javascript; charset=utf-8")
+            || a.content_type.as_deref() == Some("application/json; charset=utf-8")
+    });
+
+    let Some(js_attachment) = js_attachment else {
+        return Ok(());
+    };
+
+    if ctx.args.is_some() {
+        return Err(
+            "A JavaScript/JSON attachment cannot be combined with command arguments.".into(),
+        );
+    }
+
+    if ctx.msg.attachments.len() != 1 {
+        return Err(
+            "A JavaScript/JSON attachment cannot be combined with other attachments.".into(),
+        );
+    }
+
+    let contents = read_attachment(js_attachment).await?;
+
+    ctx.args = if js_attachment.content_type.as_deref() == Some("text/javascript; charset=utf-8") {
+        Some(format!("```js\n{}\n```", contents))
+    } else {
+        Some(format!("```json\n{}\n```", contents))
+    };
+
+    Ok(())
 }
