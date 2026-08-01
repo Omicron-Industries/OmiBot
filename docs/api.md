@@ -1,6 +1,6 @@
-# Bunny Bot Scripting API Reference
+# OmiBot Scripting API Reference
 
-This document provides a full reference for writing JavaScript script tags in **Bunny Bot**.
+This document provides a full reference for writing JavaScript script tags in **OmiBot**.
 
 ---
 

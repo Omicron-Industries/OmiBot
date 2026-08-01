@@ -15,9 +15,9 @@ RUN cargo build --release
 FROM rust:1.88-bullseye as runner
 
 # Copy the server binary to the /app directory
-COPY --from=builder /app/target/release/bunny_bot /app/
+COPY --from=builder /app/target/release/omibot /app/
 COPY --from=builder /app/Cargo.toml /app/Cargo.toml
 
 WORKDIR /app
 
-CMD ["/app/bunny_bot"]
+CMD ["/app/omibot"]

@@ -2,17 +2,17 @@ services:
   postgres:
     image: postgres:18
     networks:
-      - bunny_bot_network
+      - omibot_network
     restart: unless-stopped
     env_file: ".env"
     volumes:
       - ./postgresql:/var/lib/postgresql
     ports:
       - "${POSTGRES_PORT}:5432"
-  bunny_bot:
-    image: git.marinodev.com/drake/bunny_bot
+  omibot:
+    image: ghcr.io/omicron-industries/omibot:latest
     networks:
-      - bunny_bot_network
+      - omibot_network
     depends_on:
       - postgres
     restart: unless-stopped
@@ -23,5 +23,5 @@ services:
       - ./logs/:/app/logs/
 
 networks:
-  bunny_bot_network:
+  omibot_network:
     driver: bridge
