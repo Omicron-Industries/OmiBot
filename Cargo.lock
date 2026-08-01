@@ -180,22 +180,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
 
 [[package]]
-name = "bunny_bot"
-version = "0.1.0"
-dependencies = [
- "dotenvy",
- "env_logger",
- "log",
- "moka",
- "rquickjs",
- "serde",
- "serde_json",
- "serenity",
- "sqlx",
- "tokio",
-]
-
-[[package]]
 name = "bytecount"
 version = "0.6.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1347,6 +1331,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "omibot"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "env_logger",
+ "log",
+ "moka",
+ "rquickjs",
+ "serde",
+ "serde_json",
+ "serenity",
+ "sqlx",
+ "tokio",
 ]
 
 [[package]]

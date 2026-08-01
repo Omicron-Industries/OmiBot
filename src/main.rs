@@ -1,10 +1,10 @@
-use bunny_bot::cache::GuildCache;
-use bunny_bot::commands::CommandContext;
-use bunny_bot::db::tags::detect::get_detectable_tags;
-use bunny_bot::settings::{GuildSettings, DEFAULT_PREFIX};
-use bunny_bot::util::tag::execute::execute_tag;
-use bunny_bot::{commands, BotState};
 use log::{error, info, logger};
+use omibot::cache::GuildCache;
+use omibot::commands::CommandContext;
+use omibot::db::tags::detect::get_detectable_tags;
+use omibot::settings::{GuildSettings, DEFAULT_PREFIX};
+use omibot::util::tag::execute::execute_tag;
+use omibot::{commands, BotState};
 use serenity::all::{CreateAllowedMentions, CreateEmbed, CreateMessage, GuildId};
 use serenity::async_trait;
 use serenity::model::channel::Message;
