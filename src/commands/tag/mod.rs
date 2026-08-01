@@ -1,6 +1,6 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::{
-    CommandCategory, CommandContext, CommandInfo, get_prefix, send_reply_ping_text,
+    get_prefix, send_reply_ping_text, CommandCategory, CommandContext, CommandInfo,
 };
 use crate::util::tag::execute::execute_tag;
 mod add;
@@ -13,6 +13,7 @@ mod detect;
 mod edit;
 mod info;
 mod list;
+pub mod migrate;
 mod raw;
 mod rename;
 mod search;
@@ -80,6 +81,7 @@ pub const TAG_SUBCOMMANDS: &[&str] = &[
     "text",
     "detect",
     "detectable",
+    "migrate",
 ];
 
 pub async fn dispatch(ctx: &mut CommandContext) {
@@ -100,6 +102,7 @@ pub async fn dispatch(ctx: &mut CommandContext) {
         Some("ban") => ban::dispatch(ctx).await,
         Some("unban") => unban::dispatch(ctx).await,
         Some("bans") => bans::dispatch(ctx).await,
+        Some("migrate") => migrate::dispatch(ctx).await,
         Some("help") => {
             let next = ctx.consume_arg();
             match next.as_deref() {

@@ -1,16 +1,18 @@
 use log::{error, info};
+use moka::future::Cache;
 use omibot::cache::GuildCache;
+use omibot::commands::tag::migrate::receive_tag_content;
 use omibot::commands::CommandContext;
 use omibot::db::tags::detect::get_detectable_tags;
 use omibot::settings::GuildSettings;
 use omibot::util::tag::execute::execute_tag;
-use omibot::{BotState, commands};
+use omibot::{commands, BotState};
 use serenity::all::GuildId;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Postgres, QueryBuilder, query, query_as};
+use sqlx::{query, query_as, Postgres, QueryBuilder};
 use std::env;
 use std::sync::Arc;
 
@@ -28,6 +30,27 @@ impl EventHandler for Bot {
                 return;
             }
         };
+
+        if let Some(referenced) = &msg.referenced_message {
+            if self.state.pending_migrations.contains_key(&referenced.id) {
+                if msg.author.id.get() == 708269782482550814 {
+                    // Lev ID 708269782482550814
+                    receive_tag_content(
+                        &msg,
+                        self.state
+                            .pending_migrations
+                            .get(&referenced.id)
+                            .await
+                            .unwrap()
+                            .clone(),
+                        self.state.clone(),
+                        ctx,
+                    )
+                    .await;
+                }
+                return;
+            }
+        }
 
         let settings = match self
             .state
@@ -158,6 +181,7 @@ async fn main() {
     let bot_state = Arc::new(BotState {
         db_pool: pool,
         guild_cache,
+        pending_migrations: Cache::new(100),
     });
 
     let bot = Bot {

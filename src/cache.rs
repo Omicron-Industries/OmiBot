@@ -5,6 +5,7 @@ use serenity::all::GuildId;
 pub struct GuildCache {
     pub settings: Cache<GuildId, GuildSettings>,
     pub detectable_tags: Cache<GuildId, Vec<String>>,
+    pub enabled: Cache<GuildId, bool>,
 }
 
 impl GuildCache {
@@ -12,6 +13,7 @@ impl GuildCache {
         GuildCache {
             settings: Cache::new(u64::MAX),
             detectable_tags: Cache::new(u64::MAX),
+            enabled: Cache::new(u64::MAX),
         }
     }
 }

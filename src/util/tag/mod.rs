@@ -1,5 +1,5 @@
-use crate::commands::{CommandContext, send_internal_error_msg, send_reply_ping_text};
-use crate::db::tags::create::{CreateTagError, create_tag};
+use crate::commands::{send_internal_error_msg, send_reply_ping_text, CommandContext};
+use crate::db::tags::create::{create_tag, CreateTagError};
 use crate::db::tags::detect::add_detectable_to_cache;
 use crate::util::tag::alias::AliasTagContent;
 use crate::util::tag::embed::EmbedTagContent;
@@ -71,15 +71,31 @@ pub struct CreateTagModel {
 }
 
 impl CreateTagModel {
-    pub fn with_msg(msg: &Message, name: &str, payload: TagPayload, detect: Option<bool>) -> Self {
+    pub fn new(
+        guild_id: i64,
+        owner_id: i64,
+        name: String,
+        payload: TagPayload,
+        detect: Option<bool>,
+    ) -> Self {
         CreateTagModel {
-            guild_id: i64::from(msg.guild_id.unwrap()),
-            owner_id: i64::from(msg.author.id),
-            name: name.to_string(),
+            guild_id,
+            owner_id,
+            name,
             kind: TagKind::from_payload(&payload),
             payload,
             detect,
         }
+    }
+
+    pub fn with_msg(msg: &Message, name: &str, payload: TagPayload, detect: Option<bool>) -> Self {
+        Self::new(
+            i64::from(msg.guild_id.unwrap()),
+            i64::from(msg.author.id),
+            name.to_string(),
+            payload,
+            detect,
+        )
     }
     pub fn with_ctx(
         ctx: &CommandContext,

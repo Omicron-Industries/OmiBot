@@ -3,6 +3,7 @@ use crate::util::tag::TagKind;
 use log::error;
 use sqlx::{Error, PgPool};
 
+#[derive(Debug)]
 pub enum CreateTagError {
     Serialize,
     Exists,

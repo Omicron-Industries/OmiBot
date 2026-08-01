@@ -4,11 +4,12 @@ use serenity::all::{Context, CreateAllowedMentions, CreateMessage, GuildId, Mess
 use std::sync::Arc;
 
 mod admins;
+pub mod enable;
 mod eval;
 mod help;
 mod ping;
 mod settings;
-pub(crate) mod tag;
+pub mod tag;
 
 pub async fn get_prefix(ctx: &CommandContext) -> String {
     ctx.state
@@ -176,6 +177,13 @@ pub const INFO: &'static CommandInfo = &CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
+    if ctx.state.guild_cache.enabled.get(&ctx.get_guild_id()).await == Some(false) {
+        if matches!(ctx.peek_arg().as_deref(), Some("enable")) {
+            return enable::dispatch(ctx).await;
+        }
+        return;
+    }
+
     if matches!(ctx.peek_arg().as_deref(), Some("help")) {
         ctx.consume_arg();
         ctx.set_help();
