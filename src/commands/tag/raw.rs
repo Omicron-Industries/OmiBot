@@ -1,14 +1,14 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::payload_mismatch_error;
-use crate::commands::tag::util::script::ScriptTagContent;
-use crate::commands::tag::util::text::TextTagContent;
-use crate::commands::tag::util::TagKind::{Alias, Embed, Script, Text};
 use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::fetch::fetch_tag;
+use crate::util::tag::execute::payload_mismatch_error;
+use crate::util::tag::script::ScriptTagContent;
+use crate::util::tag::text::TextTagContent;
+use crate::util::tag::TagKind::{Alias, Embed, Script, Text};
 use log::error;
 use serenity::all::{CreateAttachment, CreateMessage};
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag raw",
     usage: Some("<tag_name>"),
     full_desc: "Get the unformatted raw content of a tag sent as a file attachment.",

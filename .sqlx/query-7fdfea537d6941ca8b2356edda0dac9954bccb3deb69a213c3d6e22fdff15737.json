@@ -1,0 +1,51 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            (t.owner_id = $2) AS \"is_owner!\",\n            EXISTS (\n                SELECT 1\n                FROM admins a\n                WHERE a.guild_id = $1\n                  AND a.member_id = $2\n            ) AS \"is_admin!\",\n            EXISTS (\n                SELECT 1\n                FROM bans b\n                WHERE b.guild_id = $1\n                  AND b.user_id = $2\n            ) AS \"is_user_banned!\",\n            t.enabled AS \"tag_enabled!\"\n        FROM tags t\n        WHERE t.guild_id = $1\n          AND t.name = $3\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "is_owner!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "is_admin!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "is_user_banned!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "tag_enabled!",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tags",
+            "name": "enabled"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      false
+    ]
+  },
+  "hash": "7fdfea537d6941ca8b2356edda0dac9954bccb3deb69a213c3d6e22fdff15737"
+}

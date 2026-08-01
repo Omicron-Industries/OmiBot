@@ -1,5 +1,5 @@
-use crate::commands::tag::util::TagPayload;
 use crate::db::DbId;
+use crate::util::tag::TagPayload;
 use log::error;
 use serenity::all::{GuildId, UserId};
 use sqlx::{Error, PgPool};

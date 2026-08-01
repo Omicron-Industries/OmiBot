@@ -1,7 +1,7 @@
 use crate::commands;
 use crate::commands::{get_prefix, send_reply_ping_text, CommandContext, CommandInfo};
 
-pub async fn command_help(ctx: &CommandContext, cmd_info: CommandInfo) {
+pub async fn command_help(ctx: &CommandContext, cmd_info: &CommandInfo) {
     let prefix = get_prefix(ctx).await;
 
     let sub_list = generate_subcommand_list(&cmd_info, &prefix);
@@ -58,7 +58,7 @@ fn generate_subcommand_list(cmd_info: &CommandInfo, prefix: &str) -> Option<Stri
     )
 }
 
-pub async fn command_usage(ctx: &CommandContext, cmd_info: CommandInfo) {
+pub async fn command_usage(ctx: &CommandContext, cmd_info: &CommandInfo) {
     let prefix = get_prefix(ctx).await;
     let content = format!(
         r#"Improper command usage!
@@ -75,7 +75,7 @@ See `{prefix}help {}` for more information.
     send_reply_ping_text(ctx, &content).await;
 }
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "help",
     usage: Some("[command]"),
     full_desc: "Prints information about a command.",

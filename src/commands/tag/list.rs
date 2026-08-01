@@ -1,9 +1,9 @@
 use crate::commands::help::command_help;
 use crate::commands::tag::info::get_users_tags_msg;
-use crate::commands::tag::util::get_uid_from_user_text;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::util::tag::get_uid_from_user_text;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag list",
     usage: Some("[user]"),
     full_desc: "List all tags owned by yourself or a specified user.",

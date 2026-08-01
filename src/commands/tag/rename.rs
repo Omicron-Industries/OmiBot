@@ -1,10 +1,10 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::tag::util::permissions::get_tag_edit_permissions_msg;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::rename_tag;
+use crate::util::tag::permissions::get_tag_edit_permissions_msg;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag rename",
     usage: Some("<old_name> <new_name>"),
     full_desc: "Rename an existing tag.",

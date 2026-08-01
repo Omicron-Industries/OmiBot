@@ -1,6 +1,6 @@
-use crate::commands::tag::util::TagKind;
-use crate::commands::tag::util::{CreateTagModel, FetchTagModel};
 use crate::db::DbId;
+use crate::util::tag::TagKind;
+use crate::util::tag::{CreateTagModel, FetchTagModel};
 use log::error;
 use serenity::all::GuildId;
 use sqlx::error::DatabaseError;
@@ -23,15 +23,16 @@ pub async fn create_tag(db: &PgPool, tag: CreateTagModel) -> Result<i32, CreateT
 
     match sqlx::query_scalar!(
         r#"
-        INSERT INTO tags (guild_id, owner_id, name, kind, payload)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO tags (guild_id, owner_id, name, kind, payload, detect)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id;
         "#,
         tag.guild_id,
         tag.owner_id,
         tag.name,
         tag.kind as TagKind,
-        serialized_payload
+        serialized_payload,
+        tag.detect
     )
     .fetch_one(db)
     .await

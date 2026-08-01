@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO bans (guild_id, user_id, banned_by)\n        VALUES ($1, $2, $3)\n        ON CONFLICT (guild_id, user_id) DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a9e75c17eba11650c22cbea2a765f28cf49e90c791fc530cc6315307940f4a68"
+}

@@ -1,0 +1,99 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            COALESCE(target.id, source.id) AS \"id!\",\n            COALESCE(target.guild_id, source.guild_id) AS \"guild_id!\",\n            COALESCE(target.owner_id, source.owner_id) AS \"owner_id!\",\n            COALESCE(target.name, source.name) AS \"name!\",\n            COALESCE(target.kind, source.kind) AS \"kind!: TagKind\",\n            COALESCE(target.payload, source.payload) AS \"payload!\",\n            COALESCE(target.t_created, source.t_created) AS \"t_created!\",\n            COALESCE(target.t_updated, source.t_updated) AS \"t_updated!\",\n            COALESCE(target.enabled, source.enabled) AS \"enabled!\",\n            null as alias_target_name\n        FROM tags AS source\n        LEFT JOIN tags AS target\n            ON source.kind = 'alias'\n           AND target.id = (source.payload->>'target_id')::int\n        WHERE source.guild_id = $1\n          AND source.name = $2;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "guild_id!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "owner_id!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "name!",
+        "type_info": "Varchar",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "kind!: TagKind",
+        "type_info": {
+          "Custom": {
+            "name": "tag_kind",
+            "kind": {
+              "Enum": [
+                "text",
+                "alias",
+                "embed",
+                "script"
+              ]
+            }
+          }
+        },
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "payload!",
+        "type_info": "Jsonb",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "t_created!",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 7,
+        "name": "t_updated!",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 8,
+        "name": "enabled!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 9,
+        "name": "alias_target_name",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "26955f7c796ab21c733ec8876a9c269c289b0eb98ebbb19f55cc650504910973"
+}

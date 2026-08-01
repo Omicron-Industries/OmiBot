@@ -1,8 +1,8 @@
 use crate::commands::help::command_help;
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use sqlx::types::chrono;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "ping",
     usage: None,
     full_desc: "Simply replies back to a ping, and shows the full time to response.",

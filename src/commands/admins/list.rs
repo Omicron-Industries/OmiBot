@@ -1,8 +1,8 @@
 use crate::commands::help::command_help;
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::permissions::list_admins;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "admin list",
     usage: None,
     full_desc: "List all admins.",

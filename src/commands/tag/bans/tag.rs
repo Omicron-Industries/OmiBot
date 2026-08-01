@@ -1,8 +1,8 @@
 use crate::commands::help::command_help;
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::tags::bans::list_banned_tags;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag bans tag",
     usage: None,
     full_desc: "List all banned tags in the server.",

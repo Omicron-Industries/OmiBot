@@ -1,25 +1,15 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::embed::EmbedTagContent;
-use crate::commands::tag::util::script::ScriptTagContent;
-use crate::commands::tag::util::text::TextTagContent;
-use crate::commands::tag::util::TagKind;
 use crate::commands::{
-    get_prefix, send_reply_ping_message, send_reply_ping_text, CommandCategory, CommandContext,
-    CommandInfo,
+    get_prefix, send_reply_ping_text, CommandCategory, CommandContext, CommandInfo,
 };
-use crate::db::tags::fetch::fetch_tag_resolved;
-use crate::util::script::{ScriptContext, ScriptEngine, ScriptOutput};
-use crate::BotState;
-use log::error;
-use serenity::builder::{CreateEmbed, CreateMessage};
-use std::sync::Arc;
-
+use crate::util::tag::execute::execute_tag;
 mod add;
 mod alias;
 mod ban;
 mod bans;
 mod chown;
 mod delete;
+mod detect;
 mod edit;
 mod info;
 mod list;
@@ -27,7 +17,6 @@ mod raw;
 mod rename;
 mod search;
 mod unban;
-pub(crate) mod util;
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
     &CommandCategory {
@@ -49,11 +38,11 @@ const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
     &CommandCategory {
         name: Some("Admin"),
         description: None,
-        commands: &[&ban::INFO, &unban::INFO, &bans::INFO],
+        commands: &[&ban::INFO, &unban::INFO, &bans::INFO, &detect::INFO],
     },
 ];
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag",
     usage: Some("(<tag_name> | <subcommand>)"),
     full_desc: "Execute a tag or manage server tags.",
@@ -67,23 +56,47 @@ pub const INFO: CommandInfo = CommandInfo {
 
 /// All names for the tag command reserved for subcommands, prohibited from being made into a tag.
 pub const TAG_SUBCOMMANDS: &[&str] = &[
-    "add", "create", "edit", "delete", "del", "alias", "info", "owner", "raw", "list", "search",
-    "chown", "transfer", "ban", "unban", "bans", "help", "script", "embed", "text",
+    "add",
+    "create",
+    "new",
+    "edit",
+    "delete",
+    "del",
+    "rm",
+    "alias",
+    "info",
+    "owner",
+    "raw",
+    "list",
+    "search",
+    "chown",
+    "transfer",
+    "ban",
+    "unban",
+    "bans",
+    "help",
+    "script",
+    "embed",
+    "text",
+    "detect",
+    "detectable",
 ];
 
 pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("add") | Some("create") => add::dispatch(ctx).await,
+        Some("add") | Some("create") | Some("new") => add::dispatch(ctx).await,
         Some("edit") => edit::dispatch(ctx).await,
-        Some("delete") | Some("del") => delete::dispatch(ctx).await,
+        Some("rename") => rename::dispatch(ctx).await,
+        Some("delete") | Some("del") | Some("rm") => delete::dispatch(ctx).await,
         Some("alias") => alias::dispatch(ctx).await,
         Some("info") | Some("owner") => info::dispatch(ctx).await,
         Some("raw") => raw::dispatch(ctx).await,
         Some("list") => list::dispatch(ctx).await,
         Some("search") => search::dispatch(ctx).await,
         Some("chown") | Some("transfer") => chown::dispatch(ctx).await,
+        Some("detect") | Some("detectable") => detect::dispatch(ctx).await,
         Some("ban") => ban::dispatch(ctx).await,
         Some("unban") => unban::dispatch(ctx).await,
         Some("bans") => bans::dispatch(ctx).await,
@@ -109,132 +122,7 @@ pub async fn execute(ctx: &mut CommandContext) {
         return command_usage(ctx, INFO).await;
     };
 
-    match fetch_tag_resolved(&tag_name, ctx.msg.guild_id.unwrap(), &ctx.state.db_pool).await {
-        Err(e) => {
-            error!("Failed to get tag: {}", e);
-            send_reply_ping_text(
-                ctx,
-                format!("Error when searching for tag: \"{}\"\n{}", tag_name, e).as_str(),
-            )
-            .await;
-        }
-        Ok(None) => {
-            send_reply_ping_text(
-                ctx,
-                format!("No tag with name \"{}\" found!", tag_name).as_str(),
-            )
-            .await;
-        }
-        Ok(Some(tag)) => match tag.kind {
-            TagKind::Text => {
-                let payload: TextTagContent = match serde_json::from_value(tag.payload) {
-                    Ok(payload) => payload,
-                    Err(e) => {
-                        error!("Failed to deserialize payload: {}", e);
-                        return payload_mismatch_error(ctx, &tag_name).await;
-                    }
-                };
-
-                send_reply_ping_text(ctx, &payload.content).await;
-            }
-            TagKind::Alias => {
-                error!("Got an alias tag on a resolved fetch!");
-                send_reply_ping_text(
-                    ctx,
-                    format!("There was an error resolving the alias tag {}", tag_name).as_str(),
-                )
-                .await;
-            }
-            TagKind::Embed => {
-                let payload: EmbedTagContent = match serde_json::from_value(tag.payload) {
-                    Ok(payload) => payload,
-                    Err(e) => {
-                        error!("Failed to deserialize payload: {}", e);
-                        return payload_mismatch_error(ctx, &tag_name).await;
-                    }
-                };
-
-                send_reply_ping_message(
-                    ctx,
-                    CreateMessage::new().embed(CreateEmbed::from(payload.embed)),
-                )
-                .await;
-            }
-            TagKind::Script => {
-                let payload: ScriptTagContent = match serde_json::from_value(tag.payload) {
-                    Ok(payload) => payload,
-                    Err(e) => {
-                        error!("Failed to deserialize payload: {}", e);
-                        return payload_mismatch_error(ctx, &tag_name).await;
-                    }
-                };
-
-                let result = (|| {
-                    let engine = ScriptEngine::new()?;
-
-                    let script_context = ScriptContext {
-                        message: ctx.msg.clone(),
-                        args: ctx.args.clone(),
-                        guild_id: ctx.msg.guild_id.unwrap(),
-                        channel_id: ctx.msg.channel_id,
-                        author_id: ctx.msg.author.id,
-                        serenity_ctx: std::sync::Arc::new(ctx.serenity_ctx.clone()),
-                        db_pool: std::sync::Arc::new(ctx.state.db_pool.clone()),
-                        tag_name: Some(tag_name.clone()),
-                        tag_body: Some(payload.script.clone()),
-                        tag_owner_id: Some(serenity::all::UserId::new(tag.owner_id as u64)),
-                        recursion_depth: 0,
-                        reply_state: Default::default(),
-                    };
-
-                    engine.execute(&payload.script, script_context)
-                })();
-
-                match result {
-                    Err(e) => {
-                        send_reply_ping_text(
-                            ctx,
-                            format!("Failed to execute script: {:?}", e).as_str(),
-                        )
-                        .await;
-                    }
-                    Ok(output) => match output {
-                        ScriptOutput::Text(text) => {
-                            if !text.is_empty() {
-                                send_reply_ping_text(ctx, &text).await;
-                            }
-                        }
-                        ScriptOutput::Embed(embed_json) => {
-                            let inner_json = embed_json.get("embed").unwrap_or(&embed_json);
-
-                            if let Ok(js_embed) = serde_json::from_value::<
-                                crate::util::script::JsEmbed,
-                            >(inner_json.clone())
-                            {
-                                send_embed_reply(ctx, CreateEmbed::from(js_embed)).await;
-                            } else if let Ok(embed_data) =
-                                serde_json::from_value::<EmbedTagContent>(embed_json)
-                            {
-                                send_embed_reply(ctx, CreateEmbed::from(embed_data.embed)).await;
-                            } else {
-                                send_reply_ping_text(
-                                    ctx,
-                                    "Failed to parse embed from script output.",
-                                )
-                                .await;
-                            }
-                        }
-                    },
-                }
-            }
-        },
-    }
-}
-
-async fn send_embed_reply(ctx: &CommandContext, embed: CreateEmbed) {
-    if let Err(e) = send_reply_ping_message(ctx, CreateMessage::new().embed(embed)).await {
-        send_reply_ping_text(ctx, format!("Embed invalid: {}", e).as_str()).await;
-    }
+    execute_tag(ctx, &tag_name).await;
 }
 
 async fn help_script(ctx: &CommandContext) {
@@ -258,19 +146,6 @@ async fn help_embed(ctx: &CommandContext) {
     let prefix = get_prefix(ctx).await;
     let content = format!(r#"TODO"#);
     send_reply_ping_text(ctx, &content).await;
-}
-
-async fn payload_mismatch_error(ctx: &CommandContext, name: &str) {
-    error!("Tag {} payload kind does not match tag kind!", name);
-    send_reply_ping_text(
-        ctx,
-        format!(
-            "Error when evaluating tag **{}**. Please report error to <@435572469496020992>",
-            name
-        )
-        .as_str(),
-    )
-    .await;
 }
 
 pub fn tag_name_validator(name: &str) -> Option<String> {

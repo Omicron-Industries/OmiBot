@@ -1,10 +1,10 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::get_uid_from_user_text;
-use crate::commands::tag::util::permissions::get_tag_edit_permissions_msg;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::change_tag_owner;
+use crate::util::tag::get_uid_from_user_text;
+use crate::util::tag::permissions::get_tag_edit_permissions_msg;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag chown",
     usage: Some("<tag_name> <user>"),
     full_desc: "Transfer ownership of a tag to another user.",

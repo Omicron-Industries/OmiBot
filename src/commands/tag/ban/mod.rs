@@ -5,9 +5,9 @@ use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::ban::tag::execute_ban_tag;
 use crate::commands::tag::ban::user::execute_ban_user;
 use crate::commands::tag::bans;
-use crate::commands::tag::util::get_uid_from_user_text;
 use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
 use crate::util::permissions::get_admin_action_msg;
+use crate::util::tag::get_uid_from_user_text;
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
     name: None,
@@ -15,7 +15,7 @@ const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
     commands: &[&tag::INFO, &user::INFO],
 }];
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag ban",
     usage: Some("(<tag_name> | <user> | <subcommand>)"),
     full_desc: "Ban a tag or user from using tags.",

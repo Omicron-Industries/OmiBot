@@ -1,13 +1,13 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::tag::util::embed::parse_embed_tag_content;
-use crate::commands::tag::util::script::ScriptTagContent;
-use crate::commands::tag::util::text::TextTagContent;
-use crate::commands::tag::util::TagPayload;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::{edit_tag_content, EditTagError};
+use crate::util::tag::embed::parse_embed_tag_content;
+use crate::util::tag::script::ScriptTagContent;
+use crate::util::tag::text::TextTagContent;
+use crate::util::tag::TagPayload;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag edit",
     usage: Some("<tag_name> <content>"),
     full_desc: "Edit the content of an existing tag.",

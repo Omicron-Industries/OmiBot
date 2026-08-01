@@ -1,9 +1,9 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::get_uid_from_user_text;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::permissions::add_admin;
+use crate::util::tag::get_uid_from_user_text;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "admin add",
     usage: Some("<user>"),
     full_desc: "Add a user as an admin.",

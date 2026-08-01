@@ -1,12 +1,12 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
-use crate::db::tags::fetch::{fetch_owners_tags, fetch_tag};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::DbId;
+use crate::db::tags::fetch::{fetch_owners_tags, fetch_tag};
 use log::error;
 use serenity::all::{GuildId, UserId};
 use sqlx::PgPool;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag info",
     usage: Some("<tag_name>"),
     full_desc: "Display information about a tag, including owner and timestamps.",

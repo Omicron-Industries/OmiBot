@@ -1,9 +1,9 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::permissions::get_tag_edit_permissions_msg;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::edit::delete_tag;
+use crate::util::tag::permissions::get_tag_edit_permissions_msg;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag delete",
     usage: Some("<tag_name>"),
     full_desc: "Delete a tag.",

@@ -1,6 +1,8 @@
 use bunny_bot::cache::GuildCache;
 use bunny_bot::commands::CommandContext;
+use bunny_bot::db::tags::detect::get_detectable_tags;
 use bunny_bot::settings::{GuildSettings, DEFAULT_PREFIX};
+use bunny_bot::util::tag::execute::execute_tag;
 use bunny_bot::{commands, BotState};
 use log::{error, info, logger};
 use serenity::all::{CreateAllowedMentions, CreateEmbed, CreateMessage, GuildId};
@@ -85,36 +87,35 @@ impl EventHandler for Bot {
             }
         };
 
-        if !msg.content.starts_with(&settings.prefix) {
-            return;
-        }
-
         let content = msg.content.clone();
         let content = content.trim_start_matches(&settings.prefix).to_string();
-        // let (command, args) = match content.split_once(char::is_whitespace) {
-        //     Some((command, args)) => (command.to_lowercase(), Some(args.trim())),
-        //     None => (content.to_lowercase(), None),
-        // };
 
         let mut cmd_ctx = CommandContext::new(ctx, msg, Some(content), self.state.clone(), false);
-
-        commands::dispatch(&mut cmd_ctx).await;
-
-        // let message: CreateMessage = match command.as_str() {
-        //     "ping" => execute(args).await,
-        //     "tag" | "t" => tag(args, &msg, self.state.clone()).await,
-        //     "help" => help(args, &msg, self.state.clone()).await,
-        //
-        //     _ => return,
-        // };
-
-        // let message = message
-        //     .allowed_mentions(CreateAllowedMentions::new().replied_user(true))
-        //     .reference_message(&msg);
-        //
-        // if let Err(e) = msg.channel_id.send_message(&ctx.http, message).await {
-        //     error!("Error sending message: {:?}", e);
-        // }
+        if cmd_ctx.msg.content.starts_with(&settings.prefix) {
+            commands::dispatch(&mut cmd_ctx).await;
+        } else {
+            if cmd_ctx.msg.author.id.get().to_string()
+                != env::var("APPLICATION_ID").expect("APPLICATION_ID must be set")
+            {
+                match self
+                    .state
+                    .guild_cache
+                    .detectable_tags
+                    .get(&cmd_ctx.get_guild_id())
+                    .await
+                {
+                    Some(tags) => {
+                        for tag in tags {
+                            if cmd_ctx.msg.content.contains(&tag) {
+                                execute_tag(&mut cmd_ctx, &tag).await;
+                                break;
+                            }
+                        }
+                    }
+                    None => return,
+                }
+            }
+        }
     }
 }
 
@@ -198,6 +199,18 @@ async fn main() {
                 GuildId::from(row.guild_id as u64),
                 GuildSettings::new(&row.prefix),
             )
+            .await;
+    }
+
+    let detectable_tags = get_detectable_tags(&bot_state.db_pool)
+        .await
+        .expect("Couldn't get detectable tags");
+
+    for (guild_id, tags) in detectable_tags {
+        bot_state
+            .guild_cache
+            .detectable_tags
+            .insert(guild_id, tags)
             .await;
     }
 

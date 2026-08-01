@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT name\n        FROM tags\n        WHERE guild_id = $1\n          AND enabled = true\n          AND name % $2\n        ORDER BY similarity(name, $2) DESC\n        LIMIT 25\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "tags",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b3a986885825ac0a7b083090eccfe95d5ca505029f1f4d2e8d1d15b41e3aa3b5"
+}

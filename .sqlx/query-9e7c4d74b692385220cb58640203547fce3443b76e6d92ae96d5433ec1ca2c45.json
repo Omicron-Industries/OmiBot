@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    SELECT EXISTS (\n        SELECT 1\n        FROM admins\n        WHERE guild_id = $1\n          AND member_id = $2\n    ) AS \"exists!\"\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists!",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "9e7c4d74b692385220cb58640203547fce3443b76e6d92ae96d5433ec1ca2c45"
+}

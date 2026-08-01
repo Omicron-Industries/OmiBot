@@ -1,12 +1,10 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::tag::util::embed::{
-    try_handle_embed_tag, EmbedTagContent,
-};
 use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo};
 use crate::util::script::{JsEmbed, ScriptContext, ScriptEngine, ScriptOutput};
+use crate::util::tag::embed::{try_handle_embed_tag, EmbedTagContent};
 use serenity::builder::{CreateEmbed, CreateMessage};
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "eval",
     usage: Some("<script_content>"),
     full_desc: "Evaluates JavaScript code or renders embed JSON in the bot's script environment.",

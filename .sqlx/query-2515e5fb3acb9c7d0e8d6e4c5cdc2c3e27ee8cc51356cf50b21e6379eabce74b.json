@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE tags\n        SET enabled = false,\n            t_updated = CURRENT_TIMESTAMP\n        WHERE guild_id = $1\n          AND name = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2515e5fb3acb9c7d0e8d6e4c5cdc2c3e27ee8cc51356cf50b21e6379eabce74b"
+}

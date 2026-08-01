@@ -2,7 +2,7 @@ mod tag;
 mod user;
 
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
+use crate::commands::{CommandCategory, CommandContext, CommandInfo, send_reply_ping_text};
 use crate::util::permissions::get_admin_action_msg;
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
@@ -11,7 +11,7 @@ const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
     commands: &[&tag::INFO, &user::INFO],
 }];
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag bans",
     usage: Some("[tag | user]"),
     full_desc: "List banned tags or users in the server.",

@@ -1,6 +1,6 @@
-use crate::commands::tag::util::FetchTagModel;
-use crate::commands::tag::util::TagKind;
 use crate::db::DbId;
+use crate::util::tag::FetchTagModel;
+use crate::util::tag::TagKind;
 use serenity::all::GuildId;
 use sqlx::{Error, PgPool};
 

@@ -1,5 +1,5 @@
-use crate::commands::tag::util::TagKind;
 use crate::db::tags::fetch::fetch_tag_resolved;
+use crate::util::tag::TagKind;
 use rquickjs::{class::Trace, Context, Ctx, JsLifetime, Result, Runtime};
 use serde::{Deserialize, Serialize};
 use serenity::model::{
@@ -640,7 +640,7 @@ fn find_users_impl<'js>(
         tokio::runtime::Handle::current().block_on(async {
             let mut results = Vec::new();
 
-            let parsed_id = crate::commands::tag::util::get_uid_from_user_text(&query_str).ok();
+            let parsed_id = crate::util::tag::get_uid_from_user_text(&query_str).ok();
 
             if let Some(uid) = parsed_id {
                 if let Ok(user) = serenity_ctx.http.get_user(uid).await {

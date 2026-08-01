@@ -1,8 +1,8 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::tags::search::search_tags;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag search",
     usage: Some("<query>"),
     full_desc: "Search for tags matching a query string.",

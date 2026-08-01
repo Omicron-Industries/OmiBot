@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM admins\n        WHERE guild_id = $1\n          AND member_id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3f409ea4d939ff7abaea36133e37906cc3151124cf4a9e260359daeb1a9b2bd4"
+}

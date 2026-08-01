@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE tags\n        SET name = $3,\n            t_updated = CURRENT_TIMESTAMP\n        WHERE guild_id = $1\n          AND name = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a108c2fba70b87cb01db25736e13e227653e547eeb0467c4df1d6f018232d1d7"
+}

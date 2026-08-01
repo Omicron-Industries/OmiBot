@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE tags\n        SET payload = $3,\n            t_updated = CURRENT_TIMESTAMP\n        WHERE guild_id = $1\n          AND name = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "27509098921d58189b6453f2d612b6193c0aa09883966b176986bbdc463e9879"
+}

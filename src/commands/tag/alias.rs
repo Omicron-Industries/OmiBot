@@ -1,14 +1,14 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::tag::util::alias::AliasTagContent;
-use crate::commands::tag::util::script::ScriptTagContent;
-use crate::commands::tag::util::text::TextTagContent;
-use crate::commands::tag::util::{try_create_tag, CreateTagModel, TagPayload};
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::fetch::fetch_tag;
+use crate::util::tag::alias::AliasTagContent;
+use crate::util::tag::script::ScriptTagContent;
+use crate::util::tag::text::TextTagContent;
+use crate::util::tag::{try_create_tag, CreateTagModel, TagPayload};
 use log::error;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag alias",
     usage: Some("<new_alias> <existing_tag>"),
     full_desc: "Alias a tag to another tag.",
@@ -23,11 +23,12 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     let command = ctx.consume_arg();
     match command.as_deref() {
         Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
-        _ => execute(&mut orig_ctx).await,
+        Some("detect") | Some("detectable") => execute(&mut orig_ctx, true).await,
+        _ => execute(&mut orig_ctx, false).await,
     }
 }
 
-pub async fn execute(ctx: &mut CommandContext) {
+pub async fn execute(ctx: &mut CommandContext, detect: bool) {
     let Some(name) = ctx.consume_arg() else {
         return command_usage(ctx, INFO).await;
     };
@@ -62,7 +63,7 @@ pub async fn execute(ctx: &mut CommandContext) {
 
             try_create_tag(
                 ctx,
-                CreateTagModel::with_ctx(&ctx, &name, TagPayload::Alias(payload)),
+                CreateTagModel::with_ctx(&ctx, &name, TagPayload::Alias(payload), Some(detect)),
             )
             .await
         }

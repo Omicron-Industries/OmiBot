@@ -1,8 +1,8 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::tags::bans::unban_tag;
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag unban tag",
     usage: Some("<tag_name>"),
     full_desc: "Unban a tag so it can be used, edited, and deleted again.",

@@ -26,11 +26,11 @@ pub async fn get_prefix(ctx: &CommandContext) -> String {
 
 #[derive(Clone)]
 pub struct CommandContext {
-    pub(crate) serenity_ctx: Context,
-    pub(crate) msg: Message,
-    args: Option<String>,
-    pub(crate) state: Arc<BotState>,
-    help: bool,
+    pub serenity_ctx: Context,
+    pub msg: Message,
+    pub args: Option<String>,
+    pub state: Arc<BotState>,
+    pub help: bool,
 }
 
 impl CommandContext {
@@ -156,7 +156,7 @@ const SUBCOMMANDS: &'static [&'static CommandCategory] = &[
     },
 ];
 
-pub const INFO: CommandInfo = CommandInfo {
+pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "<command>",
     usage: None,
     full_desc: "",
