@@ -1,7 +1,7 @@
 mod prefix;
 
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandCategory, CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
 use crate::util::permissions::get_admin_action_msg;
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
@@ -32,5 +32,3 @@ pub async fn dispatch(ctx: &mut CommandContext) {
         _ => command_usage(ctx, INFO).await,
     }
 }
-
-pub async fn execute(ctx: &mut CommandContext) {}

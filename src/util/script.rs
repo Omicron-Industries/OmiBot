@@ -2,6 +2,7 @@ use crate::db::tags::fetch::fetch_tag_resolved;
 use crate::util::tag::TagKind;
 use rquickjs::{class::Trace, Context, Ctx, JsLifetime, Result, Runtime};
 use serde::{Deserialize, Serialize};
+use serenity::all::Channel;
 use serenity::model::{
     channel::Message,
     id::{ChannelId, GuildId, UserId},
@@ -302,16 +303,22 @@ impl JsChannel {
 
         let (name, is_dm) = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async {
-                if let Some(channel) = serenity_ctx.cache.channel(channel_id) {
-                    return (channel.name.clone(), false);
+                if let Some(guild_id) = script_ctx.message.guild_id {
+                    if let Some(guild) = serenity_ctx.cache.guild(guild_id) {
+                        if let Some(channel) = guild.channels.get(&channel_id) {
+                            return (channel.name.clone(), false);
+                        }
+                    }
                 }
+
                 if let Ok(channel) = serenity_ctx.http.get_channel(channel_id).await {
                     match channel {
-                        serenity::all::Channel::Guild(g) => return (g.name, false),
-                        serenity::all::Channel::Private(_) => return ("".to_string(), true),
+                        Channel::Guild(g) => return (g.name, false),
+                        Channel::Private(_) => return ("".to_string(), true),
                         _ => {}
                     }
                 }
+
                 ("".to_string(), script_ctx.message.guild_id.is_none())
             })
         });

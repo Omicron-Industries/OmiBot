@@ -131,7 +131,7 @@ pub async fn list_admins(gid: GuildId, db: &PgPool) -> Result<Vec<UserId>, sqlx:
         SELECT member_id
         FROM admins
         WHERE guild_id = $1
-        ORDER BY t_created ASC
+        ORDER BY t_created
         "#,
         gid.db_id(),
     )

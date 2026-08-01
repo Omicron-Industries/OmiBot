@@ -27,7 +27,7 @@ pub async fn execute(ctx: &mut CommandContext) {
         return command_usage(ctx, crate::commands::admins::INFO).await;
     };
     match get_uid_from_user_text(&arg) {
-        Err(e) => send_reply_ping_text(ctx, "Expected a user!").await,
+        Err(_) => send_reply_ping_text(ctx, "Expected a user!").await,
         Ok(uid) => match add_admin(uid, ctx.get_guild_id(), &ctx.state.db_pool).await {
             Err(e) => {
                 send_reply_ping_text(ctx, format!("Failed to add admins: {e}").as_str()).await

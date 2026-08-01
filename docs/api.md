@@ -14,10 +14,10 @@ This document provides a full reference for writing JavaScript script tags in **
     - [Tag (`tag`)](#tag-tag)
     - [Embed Structure](#embed-structure)
 - [Utility Functions (`util`)](#utility-functions-util)
-    - [`util.fetchTag(name: string)`](#utilfetchtagname-string--tagobject--null)
-    - [`util.execTag(name: string, args?: string)`](#utilexectagname-string-args-string--string--embedobject--null)
-    - [`util.findUsers(query: string)`](#utilfindusersquery-string--user)
-    - [`util.reply(content: string | Embed, embed?: Embed)`](#utilreplycontent-string--embed-embed-embed--string--embed)
+    - [`util.fetchTag(name: string)`](#utilfetchtag)
+    - [`util.execTag(name: string, args?: string)`](#utilexectag)
+    - [`util.findUsers(query: string)`](#utilfindusers)
+    - [`util.reply(content: string | Embed, embed?: Embed)`](#utilreply)
 - [Evaluation Context](#evaluation-context)
     - [Global Variables](#global-variables)
     - [JavaScript Tag Creation](#javascript-tag-creation)
@@ -133,12 +133,15 @@ interface Embed {
 
 The `util` global object provides helper methods for interacting with tags, users, and responses.
 
+## util.fetchTag
+
 ### `util.fetchTag(name: string)` => `TagObject | null`
 
 Fetches a tag by name from the current guild database without executing it.
 
 **Return Value:**
 
+<!-- @formatter:off -->
 ```ts
 {
     name: string;
@@ -146,11 +149,11 @@ Fetches a tag by name from the current guild database without executing it.
     content: string; // Payload content or script body
     owner_id: string;
     payload: object;
-    toString()
-:
-    string; // Returns 'content' when evaluated as a string
+
+    toString(): string; // Returns 'content' when evaluated as a string
 }
 ```
+<!-- @formatter:on -->
 
 If the tag does not exist, returns `null`.
 
@@ -164,6 +167,8 @@ if (headerTag) {
 ```
 
 ---
+
+## util.execTag
 
 ### `util.execTag(name: string, args?: string)` => `string | EmbedObject | null`
 
@@ -182,6 +187,8 @@ return util.execTag('welcome_card', 'Alice');
 
 ---
 
+## util.findUsers
+
 ### `util.findUsers(query: string)` => `User[]`
 
 Searches for up to 10 matching users in the guild by Snowflake ID, user mention (`<@123456789>`), or username / nickname
@@ -199,6 +206,8 @@ if (matches.length > 0) {
 ```
 
 ---
+
+## util.reply
 
 ### `util.reply(content: string | Embed, embed?: Embed)` or `msg.reply(content: string | Embed, embed?: Embed)`
 

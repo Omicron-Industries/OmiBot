@@ -3,7 +3,7 @@ mod list;
 mod remove;
 
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandCategory, CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
 use crate::util::permissions::get_admin_action_msg;
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
@@ -27,7 +27,6 @@ pub async fn dispatch(ctx: &mut CommandContext) {
         return send_reply_ping_text(ctx, &msg).await;
     }
 
-    let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
         Some("add") => add::dispatch(ctx).await,

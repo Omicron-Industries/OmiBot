@@ -137,14 +137,24 @@ To create a script tag, the content of the tag must be a multi-line JS code bloc
 ```
 
 The String `args` is made available at the start of the script, containing all message content after the tag name.
-For a full API reference, see [here](https://git.marinodev.com/drake/bunny_bot/api.md)."#
+For a full API reference, see [here](https://github.com/Omicron-Industries/OmiBot/docs/api.md)."#
     );
     send_reply_ping_text(ctx, &content).await;
 }
 
 async fn help_embed(ctx: &CommandContext) {
     let prefix = get_prefix(ctx).await;
-    let content = format!(r#"TODO"#);
+    let content = format!(
+        r#"Embed tags accept several JSON formats to define embeds. Webhook embed tools like [Discohook](https://discohook.org) can be used to create the JSON.
+
+To create an embed tag, the content of the tag must be a multi-line JSON code block:
+```{prefix}tag add <name> `​`​`json
+<embed_content>
+`​`​`
+```
+
+See the full embed documentation [here](https://github.com/Omicron-Industries/OmiBot/docs/embed.md)."#
+    );
     send_reply_ping_text(ctx, &content).await;
 }
 

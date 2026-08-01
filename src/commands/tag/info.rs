@@ -1,7 +1,7 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
-use crate::db::DbId;
+use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::fetch::{fetch_owners_tags, fetch_tag};
+use crate::db::DbId;
 use log::error;
 use serenity::all::{GuildId, UserId};
 use sqlx::PgPool;
@@ -67,7 +67,7 @@ pub async fn get_users_tags_msg(gid: GuildId, uid: UserId, db: &PgPool) -> Strin
     let tags = match fetch_owners_tags(uid.db_id(), gid.db_id(), db).await {
         Ok(tags) => tags,
         Err(e) => {
-            error!("Error fetching tags of user {uid}");
+            error!("Error fetching tags of user {uid}: {e}");
             return format!("Error fetching tags of user <@{uid}>!");
         }
     };
