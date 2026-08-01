@@ -1,11 +1,11 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
-use crate::db::tags::edit::{edit_tag_content, EditTagError};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::db::tags::edit::{EditTagError, edit_tag_content};
 use crate::util::tag::embed::parse_embed_tag_content;
 use crate::util::tag::script::ScriptTagContent;
 use crate::util::tag::text::TextTagContent;
-use crate::util::tag::{add_attachments_to_args, TagPayload};
+use crate::util::tag::{TagPayload, add_attachments_to_args};
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag edit",
@@ -23,7 +23,8 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        Some("help") => command_help(ctx, INFO).await,
+        _ if ctx.help => command_help(ctx, INFO).await,
         _ => execute(&mut orig_ctx).await,
     }
 }

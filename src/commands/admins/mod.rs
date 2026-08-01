@@ -1,15 +1,16 @@
 mod add;
 mod list;
+pub mod permissions;
 mod remove;
 
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
-use crate::util::permissions::get_admin_action_msg;
+use crate::util::permissions::{get_admin_action_msg, Permission};
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
     name: None,
     description: None,
-    commands: &[&add::INFO, &remove::INFO, &list::INFO],
+    commands: &[&add::INFO, &remove::INFO, &list::INFO, &permissions::INFO],
 }];
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -23,7 +24,7 @@ pub const INFO: &'static CommandInfo = &CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
-    if let Some(msg) = get_admin_action_msg(ctx).await {
+    if let Some(msg) = get_admin_action_msg(ctx, Permission::ManageAdmins).await {
         return send_reply_ping_text(ctx, &msg).await;
     }
 
@@ -32,7 +33,9 @@ pub async fn dispatch(ctx: &mut CommandContext) {
         Some("add") => add::dispatch(ctx).await,
         Some("remove") | Some("rm") => remove::dispatch(ctx).await,
         Some("list") => list::dispatch(ctx).await,
-        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        Some("permissions") | Some("perms") => permissions::dispatch(ctx).await,
+        Some("help") => command_help(ctx, INFO).await,
+        _ if ctx.help => command_help(ctx, INFO).await,
         _ => command_usage(ctx, INFO).await,
     }
 }

@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE tags\n        SET payload = $3,\n            kind = $4,\n            t_updated = CURRENT_TIMESTAMP\n        WHERE guild_id = $1\n          AND name = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Jsonb",
+        {
+          "Custom": {
+            "name": "tag_kind",
+            "kind": {
+              "Enum": [
+                "text",
+                "alias",
+                "embed",
+                "script"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "84325c066a27511a3525ca479a09bf4b8a9c45823edeec8e085cbe89b16be803"
+}

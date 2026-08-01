@@ -6,8 +6,25 @@ pub async fn command_help(ctx: &CommandContext, cmd_info: &CommandInfo) {
 
     let sub_list = generate_subcommand_list(&cmd_info, &prefix);
     let content = format!(
-        "{}{}{}",
+        "{}{}{}{}{}",
         cmd_info.full_desc,
+        cmd_info
+            .usage
+            .map(|s| format!("\nUsage: `{}{} {}`", prefix, cmd_info.command, s))
+            .unwrap_or_default(),
+        if !cmd_info.aliases.is_empty() {
+            format!(
+                "\nAliases: {}",
+                cmd_info
+                    .aliases
+                    .iter()
+                    .map(|a| format!("`{}`", a))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        } else {
+            String::new()
+        },
         sub_list.map(|s| format!("\n\n{}", s)).unwrap_or_default(),
         cmd_info
             .further_help
@@ -18,44 +35,47 @@ pub async fn command_help(ctx: &CommandContext, cmd_info: &CommandInfo) {
 }
 
 fn generate_subcommand_list(cmd_info: &CommandInfo, prefix: &str) -> Option<String> {
-    if cmd_info.subcommands.is_none() {
-        return None;
-    }
-    Some(
-        cmd_info
-            .subcommands
-            .unwrap()
-            .iter()
-            .map(|cat| {
-                let commands = cat
-                    .commands
-                    .iter()
-                    .map(|sub| {
-                        format!(
-                            "`{prefix}{}{}` - {}",
-                            sub.command,
-                            sub.usage.map(|s| format!(" {}", s)).unwrap_or_default(),
-                            sub.short_desc.unwrap_or(sub.full_desc)
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join("\n");
+    let subcommands = cmd_info.subcommands?;
 
-                match cat.name {
-                    Some(name) => format!(
-                        "**{}:**\n{}{}",
-                        name,
-                        cat.description
-                            .map(|d| format!("{}\n", d))
-                            .unwrap_or_default(),
-                        commands
-                    ),
-                    None => commands,
-                }
-            })
-            .collect::<Vec<_>>()
-            .join("\n\n"),
-    )
+    let has_categories = subcommands.iter().any(|cat| cat.name.is_some());
+
+    let commands = subcommands
+        .iter()
+        .map(|cat| {
+            let commands = cat
+                .commands
+                .iter()
+                .map(|sub| {
+                    format!(
+                        "`{prefix}{}{}` - {}",
+                        sub.command,
+                        sub.usage.map(|s| format!(" {}", s)).unwrap_or_default(),
+                        sub.short_desc.unwrap_or(sub.full_desc)
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            match cat.name {
+                Some(name) => format!(
+                    "**{}:**\n{}{}",
+                    name,
+                    cat.description
+                        .map(|d| format!("{}\n", d))
+                        .unwrap_or_default(),
+                    commands
+                ),
+                None => commands,
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+
+    if has_categories {
+        Some(commands)
+    } else {
+        Some(format!("**Subcommands:**\n{}", commands))
+    }
 }
 
 pub async fn command_usage(ctx: &CommandContext, cmd_info: &CommandInfo) {

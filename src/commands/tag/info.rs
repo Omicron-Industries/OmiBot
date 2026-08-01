@@ -1,7 +1,7 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
-use crate::db::tags::fetch::{fetch_owners_tags, fetch_tag};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::DbId;
+use crate::db::tags::fetch::{fetch_owners_tags, fetch_tag};
 use log::error;
 use serenity::all::{GuildId, UserId};
 use sqlx::PgPool;
@@ -20,7 +20,8 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        Some("help") => command_help(ctx, INFO).await,
+        _ if ctx.help => command_help(ctx, INFO).await,
         _ => execute(&mut orig_ctx).await,
     }
 }

@@ -1,10 +1,10 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_message, send_reply_ping_text};
 use crate::db::tags::fetch::fetch_tag;
+use crate::util::tag::TagKind::{Alias, Embed, Script, Text};
 use crate::util::tag::execute::payload_mismatch_error;
 use crate::util::tag::script::ScriptTagContent;
 use crate::util::tag::text::TextTagContent;
-use crate::util::tag::TagKind::{Alias, Embed, Script, Text};
 use log::error;
 use serenity::all::{CreateAttachment, CreateMessage};
 
@@ -22,7 +22,8 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        Some("help") => command_help(ctx, INFO).await,
+        _ if ctx.help => command_help(ctx, INFO).await,
         _ => execute(&mut orig_ctx).await,
     }
 }

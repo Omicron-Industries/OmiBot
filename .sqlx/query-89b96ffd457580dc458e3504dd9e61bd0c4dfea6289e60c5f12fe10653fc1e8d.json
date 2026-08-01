@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO admins (guild_id, member_id)\n            VALUES ($1, $2)\n            ON CONFLICT (guild_id, member_id) DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "89b96ffd457580dc458e3504dd9e61bd0c4dfea6289e60c5f12fe10653fc1e8d"
+}

@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE admins\n        SET permissions = permissions | $1\n        WHERE guild_id = $2\n        AND member_id = $3\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f5fe632268b54e70df2123096ab7b950df1ddee3405541cd5862b03a1aab058e"
+}

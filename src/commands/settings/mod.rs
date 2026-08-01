@@ -2,7 +2,7 @@ mod prefix;
 
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
-use crate::util::permissions::get_admin_action_msg;
+use crate::util::permissions::{get_admin_action_msg, Permission};
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
     name: None,
@@ -21,13 +21,14 @@ pub const INFO: &'static CommandInfo = &CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
-    if let Some(msg) = get_admin_action_msg(ctx).await {
+    if let Some(msg) = get_admin_action_msg(ctx, Permission::ManageSettings).await {
         return send_reply_ping_text(ctx, &msg).await;
     }
 
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        Some("help") => command_help(ctx, INFO).await,
+        _ if ctx.help => command_help(ctx, INFO).await,
         Some("prefix") => prefix::dispatch(ctx).await,
         _ => command_usage(ctx, INFO).await,
     }

@@ -1,7 +1,7 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::detect::toggle_detectable;
-use crate::util::permissions::get_admin_action_msg;
+use crate::util::permissions::{get_admin_action_msg, Permission};
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag detect",
@@ -14,13 +14,14 @@ pub const INFO: &'static CommandInfo = &CommandInfo {
 };
 
 pub async fn dispatch(ctx: &mut CommandContext) {
-    if let Some(msg) = get_admin_action_msg(ctx).await {
+    if let Some(msg) = get_admin_action_msg(ctx, Permission::ManageTags).await {
         send_reply_ping_text(ctx, &msg).await
     }
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        Some("help") => command_help(ctx, INFO).await,
+        _ if ctx.help => command_help(ctx, INFO).await,
         _ => execute(&mut orig_ctx).await,
     }
 }

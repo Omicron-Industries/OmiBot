@@ -1,9 +1,9 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::tags::fetch::fetch_tag;
 use crate::util::tag::alias::AliasTagContent;
-use crate::util::tag::{try_create_tag, CreateTagModel, TagPayload};
+use crate::util::tag::{CreateTagModel, TagPayload, try_create_tag};
 use log::error;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -20,7 +20,8 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     let mut orig_ctx = ctx.clone();
     let command = ctx.consume_arg();
     match command.as_deref() {
-        Some("help") | _ if ctx.help => command_help(ctx, INFO).await,
+        Some("help") => command_help(ctx, INFO).await,
+        _ if ctx.help => command_help(ctx, INFO).await,
         Some("detect") | Some("detectable") => execute(&mut orig_ctx, true).await,
         _ => execute(&mut orig_ctx, false).await,
     }

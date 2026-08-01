@@ -80,7 +80,7 @@ impl CommandContext {
     fn parse_next_arg(&mut self) -> (Option<String>, Option<String>) {
         if let Some(args) = &self.args {
             let (first, remaining) = match args.split_once(char::is_whitespace) {
-                Some((next, args)) => (next.to_lowercase(), Some(args.to_string())),
+                Some((next, args)) => (next.to_lowercase(), Some(args.trim_start().to_string())),
                 None => (args.to_lowercase(), None),
             };
             (Some(first), remaining)
