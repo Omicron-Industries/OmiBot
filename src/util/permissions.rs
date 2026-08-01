@@ -128,5 +128,4 @@ pub async fn get_admin_action_msg(
         }
         Err(e) => return Some(format!("{}", e)),
     }
-    None
 }
