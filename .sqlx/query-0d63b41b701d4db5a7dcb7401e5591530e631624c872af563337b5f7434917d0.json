@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            (t.owner_id = $2) AS \"is_owner!\",\n            EXISTS (\n                SELECT 1\n                FROM admins a\n                WHERE a.guild_id = $1\n                  AND a.member_id = $2\n            ) AS \"is_admin!\",\n            EXISTS (\n                SELECT 1\n                FROM bans b\n                WHERE b.guild_id = $1\n                  AND b.user_id = $2\n            ) AS \"is_user_banned!\",\n            t.enabled AS \"tag_enabled!\"\n        FROM tags t\n        WHERE t.guild_id = $1\n          AND t.name = $3\n        ",
+  "query": "\n    SELECT\n        (t.owner_id = $2) AS \"is_owner!\",\n        EXISTS (\n            SELECT 1\n            FROM admins a\n            WHERE a.guild_id = $1\n              AND a.member_id = $2\n              AND (a.permissions & 1) = 1\n        ) AS \"is_admin!\",\n        EXISTS (\n            SELECT 1\n            FROM bans b\n            WHERE b.guild_id = $1\n              AND b.user_id = $2\n        ) AS \"is_user_banned!\",\n        t.enabled AS \"tag_enabled!\"\n    FROM tags t\n    WHERE t.guild_id = $1\n      AND t.name = $3\n    ",
   "describe": {
     "columns": [
       {
@@ -47,5 +47,5 @@
       false
     ]
   },
-  "hash": "7fdfea537d6941ca8b2356edda0dac9954bccb3deb69a213c3d6e22fdff15737"
+  "hash": "0d63b41b701d4db5a7dcb7401e5591530e631624c872af563337b5f7434917d0"
 }
