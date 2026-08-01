@@ -1,6 +1,6 @@
 use crate::db::tags::fetch::fetch_tag_resolved;
 use crate::util::tag::TagKind;
-use rquickjs::{class::Trace, Context, Ctx, JsLifetime, Result, Runtime};
+use rquickjs::{Context, Ctx, JsLifetime, Result, Runtime, class::Trace};
 use serde::{Deserialize, Serialize};
 use serenity::all::Channel;
 use serenity::model::{

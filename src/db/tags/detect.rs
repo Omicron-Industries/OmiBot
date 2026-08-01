@@ -1,5 +1,5 @@
-use crate::db::DbId;
 use crate::BotState;
+use crate::db::DbId;
 use serenity::all::GuildId;
 use sqlx::PgPool;
 use std::collections::HashMap;

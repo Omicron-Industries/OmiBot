@@ -1,4 +1,3 @@
-
 pub const DEFAULT_PREFIX: &str = "%";
 
 #[derive(Clone)]
@@ -12,10 +11,8 @@ impl GuildSettings {
             prefix: prefix.to_string(),
         }
     }
-    
+
     pub fn default() -> Self {
         GuildSettings::new(DEFAULT_PREFIX)
     }
 }
-
-

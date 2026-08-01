@@ -120,6 +120,15 @@ pub async fn send_reply_ping_text(ctx: &CommandContext, content: &str) {
     }
 }
 
+pub async fn send_internal_error_msg(ctx: &CommandContext, msg: &str) {
+    error!("Internal error: {:?}", msg);
+    send_reply_ping_text(
+        ctx,
+        format!("Internal Error: {msg}, please report to <@435572469496020992>.").as_str(),
+    )
+    .await;
+}
+
 pub async fn send_reply_ping_message(
     ctx: &CommandContext,
     msg: CreateMessage,

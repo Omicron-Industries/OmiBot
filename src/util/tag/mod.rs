@@ -1,5 +1,5 @@
-use crate::commands::{send_reply_ping_text, CommandContext};
-use crate::db::tags::create::{create_tag, CreateTagError};
+use crate::commands::{CommandContext, send_internal_error_msg, send_reply_ping_text};
+use crate::db::tags::create::{CreateTagError, create_tag};
 use crate::db::tags::detect::add_detectable_to_cache;
 use crate::util::tag::alias::AliasTagContent;
 use crate::util::tag::embed::EmbedTagContent;
@@ -119,14 +119,7 @@ pub async fn try_create_tag(ctx: &CommandContext, tag: CreateTagModel) {
             send_reply_ping_text(ctx, "Failed to serialize tag.").await
         }
         Err(CreateTagError::DB(e)) => {
-            send_reply_ping_text(
-                ctx,
-                format!(
-                    "Error creating tag: {e}\n Please report this error to <@435572469496020992>"
-                )
-                .as_str(),
-            )
-            .await
+            send_internal_error_msg(ctx, format!("Error creating tag: {e}.").as_str()).await
         }
     };
 }

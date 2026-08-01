@@ -1,5 +1,5 @@
 use crate::commands::help::command_help;
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::permissions::list_admins;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -24,7 +24,10 @@ pub async fn dispatch(ctx: &mut CommandContext) {
 
 pub async fn execute(ctx: &mut CommandContext) {
     match list_admins(ctx.get_guild_id(), &ctx.state.db_pool).await {
-        Err(e) => send_reply_ping_text(ctx, format!("Error fetching admins: {e}").as_str()).await,
+        Err(e) => {
+            send_internal_error_msg(ctx, format!("Error fetching admins: {e}").as_str()).await
+        }
+
         Ok(members) => {
             send_reply_ping_text(
                 ctx,

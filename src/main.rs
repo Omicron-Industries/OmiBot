@@ -4,13 +4,13 @@ use omibot::commands::CommandContext;
 use omibot::db::tags::detect::get_detectable_tags;
 use omibot::settings::GuildSettings;
 use omibot::util::tag::execute::execute_tag;
-use omibot::{commands, BotState};
+use omibot::{BotState, commands};
 use serenity::all::GuildId;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{query, query_as, Postgres, QueryBuilder};
+use sqlx::{Postgres, QueryBuilder, query, query_as};
 use std::env;
 use std::sync::Arc;
 

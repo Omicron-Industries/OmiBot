@@ -1,7 +1,7 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_message, send_reply_ping_text};
 use crate::util::script::{JsEmbed, ScriptContext, ScriptEngine, ScriptOutput};
-use crate::util::tag::embed::{try_handle_embed_tag, EmbedTagContent};
+use crate::util::tag::embed::{EmbedTagContent, try_handle_embed_tag};
 use crate::util::tag::read_attachment;
 use serenity::builder::{CreateEmbed, CreateMessage};
 

@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::edit::delete_tag;
 use crate::util::tag::permissions::get_tag_edit_permissions_msg;
 
@@ -31,7 +31,9 @@ pub async fn execute(ctx: &mut CommandContext) {
         send_reply_ping_text(ctx, &msg).await
     }
     match delete_tag(ctx.get_guild_id(), &name, &ctx.state.db_pool).await {
-        Err(e) => send_reply_ping_text(ctx, format!("Error deleting tag: {:?}", e).as_str()).await,
+        Err(e) => {
+            send_internal_error_msg(ctx, format!("Error deleting tag: {:?}", e).as_str()).await
+        }
         Ok(_) => {
             send_reply_ping_text(
                 ctx,

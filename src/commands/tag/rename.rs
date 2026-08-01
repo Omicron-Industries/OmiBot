@@ -1,6 +1,6 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::edit::rename_tag;
 use crate::util::tag::permissions::get_tag_edit_permissions_msg;
 
@@ -46,7 +46,8 @@ pub async fn execute(ctx: &mut CommandContext) {
                             .await;
                         }
                     }
-                    send_reply_ping_text(ctx, format!("Error deleting tag: {:?}", e).as_str()).await
+                    send_internal_error_msg(ctx, format!("Error deleting tag: {:?}", e).as_str())
+                        .await
                 }
                 Ok(_) => {
                     send_reply_ping_text(

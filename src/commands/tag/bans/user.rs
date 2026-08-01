@@ -1,5 +1,5 @@
 use crate::commands::help::command_help;
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::bans::list_banned_users;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -38,7 +38,8 @@ pub async fn execute_bans_user(ctx: &mut CommandContext) {
             send_reply_ping_text(ctx, &format!("Banned users: {}", mentions)).await
         }
         Err(e) => {
-            send_reply_ping_text(ctx, format!("Error listing banned users: {:?}", e).as_str()).await
+            send_internal_error_msg(ctx, format!("Error listing banned users: {:?}", e).as_str())
+                .await
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::bans::unban_tag;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -40,6 +40,8 @@ pub async fn execute_unban_tag(name: &str, ctx: &mut CommandContext) {
             )
             .await
         }
-        Err(e) => send_reply_ping_text(ctx, format!("Error unbanning tag: {:?}", e).as_str()).await,
+        Err(e) => {
+            send_internal_error_msg(ctx, format!("Error unbanning tag: {:?}", e).as_str()).await
+        }
     }
 }

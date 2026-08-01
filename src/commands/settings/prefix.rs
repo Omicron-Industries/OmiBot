@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::settings::set_prefix;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -39,14 +39,15 @@ pub async fn execute(ctx: &mut CommandContext) {
     {
         Ok(true) => send_reply_ping_text(ctx, format!("Set prefix to `{prefix}`.").as_str()).await,
         Ok(false) => {
-            send_reply_ping_text(
+            send_internal_error_msg(
                 ctx,
                 "Failed to update prefix. DB query succeeded, but 0 rows affected",
             )
             .await
         }
+
         Err(e) => {
-            send_reply_ping_text(ctx, format!("Failed to update prefix: {:?}", e).as_str()).await
+            send_internal_error_msg(ctx, format!("Failed to update prefix: {:?}", e).as_str()).await
         }
     }
 }

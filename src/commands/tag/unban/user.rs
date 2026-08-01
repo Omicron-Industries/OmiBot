@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::bans::unban_user;
 use crate::util::tag::get_uid_from_user_text;
 use serenity::all::UserId;
@@ -46,7 +46,7 @@ pub async fn execute_unban_user(uid: UserId, ctx: &mut CommandContext) {
             .await
         }
         Err(e) => {
-            send_reply_ping_text(ctx, format!("Error unbanning user: {:?}", e).as_str()).await
+            send_internal_error_msg(ctx, format!("Error unbanning user: {:?}", e).as_str()).await
         }
     }
 }

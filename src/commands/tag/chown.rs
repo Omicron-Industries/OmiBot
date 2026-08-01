@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::edit::change_tag_owner;
 use crate::util::tag::get_uid_from_user_text;
 use crate::util::tag::permissions::get_tag_edit_permissions_msg;
@@ -38,12 +38,13 @@ pub async fn execute(ctx: &mut CommandContext) {
             Ok(uid) => {
                 match change_tag_owner(ctx.get_guild_id(), &name, uid, &ctx.state.db_pool).await {
                     Err(e) => {
-                        send_reply_ping_text(
+                        send_internal_error_msg(
                             ctx,
                             format!("Error changing ownership: {:?}", e).as_str(),
                         )
                         .await
                     }
+
                     Ok(_) => {
                         send_reply_ping_text(
                             ctx,

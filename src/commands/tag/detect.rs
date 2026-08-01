@@ -1,7 +1,7 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
 use crate::db::tags::detect::toggle_detectable;
-use crate::util::permissions::{get_admin_action_msg, Permission};
+use crate::util::permissions::{Permission, get_admin_action_msg};
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag detect",

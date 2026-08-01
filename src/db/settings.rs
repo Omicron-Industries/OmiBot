@@ -1,6 +1,6 @@
+use crate::BotState;
 use crate::db::DbId;
 use crate::settings::GuildSettings;
-use crate::BotState;
 use serenity::all::GuildId;
 
 pub async fn set_prefix(gid: GuildId, prefix: char, state: &BotState) -> Result<bool, sqlx::Error> {

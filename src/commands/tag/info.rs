@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::DbId;
 use crate::db::tags::fetch::{fetch_owners_tags, fetch_tag};
 use log::error;
@@ -33,13 +33,13 @@ pub async fn execute(ctx: &mut CommandContext) {
 
     match fetch_tag(&name, ctx.get_guild_id(), &ctx.state.db_pool).await {
         Err(e) => {
-            error!("Failed to get tag: {}", e);
-            send_reply_ping_text(
+            send_internal_error_msg(
                 ctx,
                 format!("Error when searching for tag: \"{}\"\n{}", name, e).as_str(),
             )
             .await
         }
+
         Ok(None) => {
             send_reply_ping_text(
                 ctx,

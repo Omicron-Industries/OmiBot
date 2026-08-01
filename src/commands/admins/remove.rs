@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::permissions::remove_admin;
 use crate::util::tag::get_uid_from_user_text;
 
@@ -30,7 +30,7 @@ pub async fn execute(ctx: &mut CommandContext) {
         Err(_) => send_reply_ping_text(ctx, "Expected a user!").await,
         Ok(uid) => match remove_admin(uid, ctx.get_guild_id(), &ctx.state.db_pool).await {
             Err(e) => {
-                send_reply_ping_text(ctx, format!("Failed to remove admins: {e}").as_str()).await
+                send_internal_error_msg(ctx, format!("Failed to remove admins: {e}").as_str()).await
             }
             Ok(true) => send_reply_ping_text(ctx, "Admin removed successfully!").await,
             Ok(false) => send_reply_ping_text(ctx, "User was not an admins!").await,

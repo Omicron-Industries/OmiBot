@@ -1,10 +1,9 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::fetch::fetch_tag;
 use crate::util::tag::alias::AliasTagContent;
 use crate::util::tag::{CreateTagModel, TagPayload, try_create_tag};
-use log::error;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
     command: "tag alias",
@@ -50,9 +49,11 @@ pub async fn execute(ctx: &mut CommandContext, detect: bool) {
                     }
                 },
                 Err(e) => {
-                    error!("Error when fetching source tag of alias: {}", e);
-                    send_reply_ping_text(ctx, "Error reading source tag!").await;
-                    return;
+                    return send_internal_error_msg(
+                        ctx,
+                        format!("Error reading source tag: {e}").as_str(),
+                    )
+                    .await;
                 }
             };
 

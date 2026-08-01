@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::permissions::set_admin_permissions;
 use crate::util::tag::get_uid_from_user_text;
 use std::str::FromStr;
@@ -39,7 +39,7 @@ pub async fn execute(ctx: &mut CommandContext) {
                         set_admin_permissions(ctx.get_guild_id(), uid, perm, &ctx.state.db_pool)
                             .await
                     {
-                        send_reply_ping_text(
+                        send_internal_error_msg(
                             ctx,
                             format!("Failed to set admin permission: {}", e).as_str(),
                         )

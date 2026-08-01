@@ -1,6 +1,6 @@
 use crate::commands::help::{command_help, command_usage};
 use crate::commands::tag::tag_name_validator;
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::edit::{EditTagError, edit_tag_content};
 use crate::util::tag::embed::parse_embed_tag_content;
 use crate::util::tag::script::ScriptTagContent;
@@ -74,10 +74,11 @@ pub async fn execute(ctx: &mut CommandContext) {
             match edit_tag_content(ctx.get_guild_id(), &name, payload, &ctx.state.db_pool).await {
                 Ok(_) => send_reply_ping_text(ctx, "Successfully edited tag content.").await,
                 Err(EditTagError::Serialize) => {
-                    send_reply_ping_text(ctx, "Failed to serialize tag.").await
+                    send_internal_error_msg(ctx, "Failed to serialize tag.").await
                 }
+
                 Err(EditTagError::DB(e)) => {
-                    send_reply_ping_text(
+                    send_internal_error_msg(
                         ctx,
                         format!("Error editing tag content: {:?}", e).as_str(),
                     )

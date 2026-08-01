@@ -1,5 +1,8 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_message, send_reply_ping_text};
+use crate::commands::{
+    CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_message,
+    send_reply_ping_text,
+};
 use crate::db::tags::fetch::fetch_tag;
 use crate::util::tag::TagKind::{Alias, Embed, Script, Text};
 use crate::util::tag::execute::payload_mismatch_error;
@@ -36,7 +39,7 @@ pub async fn execute(ctx: &mut CommandContext) {
     match fetch_tag(&name, ctx.msg.guild_id.unwrap(), &ctx.state.db_pool).await {
         Err(e) => {
             error!("Failed to get tag: {}", e);
-            send_reply_ping_text(
+            send_internal_error_msg(
                 ctx,
                 format!("Error when searching for tag: \"{}\"\n{}", name, e).as_str(),
             )
@@ -63,7 +66,7 @@ pub async fn execute(ctx: &mut CommandContext) {
                     .await
                 }
                 None => {
-                    send_reply_ping_text(
+                    send_internal_error_msg(
                         ctx,
                         format!("Failed to resolve alias **{}**!", tag.name).as_str(),
                     )

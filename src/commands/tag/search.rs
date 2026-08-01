@@ -1,5 +1,5 @@
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::search::search_tags;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -32,7 +32,7 @@ pub async fn execute(ctx: &mut CommandContext) {
             send_reply_ping_text(ctx, format!("Found: **{}**", tags.join("**, **")).as_str()).await
         }
         Err(e) => {
-            send_reply_ping_text(
+            send_internal_error_msg(
                 ctx,
                 format!("An error occurred while searching for tags: {:?}", e).as_str(),
             )

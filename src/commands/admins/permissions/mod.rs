@@ -3,9 +3,11 @@ pub mod remove;
 pub mod set;
 
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
+use crate::commands::{
+    CommandCategory, CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text,
+};
 use crate::db::permissions::admin_permissions;
-use crate::util::permissions::{get_admin_action_msg, Permission};
+use crate::util::permissions::{Permission, get_admin_action_msg};
 use crate::util::tag::get_uid_from_user_text;
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
@@ -50,8 +52,10 @@ pub async fn execute(ctx: &mut CommandContext) {
         Err(_) => send_reply_ping_text(ctx, "Expected a user!").await,
         Ok(uid) => match admin_permissions(ctx.get_guild_id(), uid, &ctx.state.db_pool).await {
             Err(e) => {
-                send_reply_ping_text(ctx, format!("Failed to read permissions: {e}").as_str()).await
+                send_internal_error_msg(ctx, format!("Failed to read permissions: {e}").as_str())
+                    .await
             }
+
             Ok(perms) => {
                 send_reply_ping_text(
                     ctx,

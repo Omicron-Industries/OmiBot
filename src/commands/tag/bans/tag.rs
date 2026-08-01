@@ -1,5 +1,5 @@
 use crate::commands::help::command_help;
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{CommandContext, CommandInfo, send_internal_error_msg, send_reply_ping_text};
 use crate::db::tags::bans::list_banned_tags;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
@@ -36,7 +36,8 @@ pub async fn execute_bans_tag(ctx: &mut CommandContext) {
             .await
         }
         Err(e) => {
-            send_reply_ping_text(ctx, format!("Error listing banned tags: {:?}", e).as_str()).await
+            send_internal_error_msg(ctx, format!("Error listing banned tags: {:?}", e).as_str())
+                .await
         }
     }
 }

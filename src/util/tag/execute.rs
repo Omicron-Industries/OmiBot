@@ -1,18 +1,19 @@
-use crate::commands::{send_reply_ping_message, send_reply_ping_text, CommandContext};
+use crate::commands::{
+    CommandContext, send_internal_error_msg, send_reply_ping_message, send_reply_ping_text,
+};
 use crate::db::tags::fetch::fetch_tag_resolved;
 use crate::util::script::{ScriptContext, ScriptEngine, ScriptOutput};
+use crate::util::tag::TagKind;
 use crate::util::tag::embed::EmbedTagContent;
 use crate::util::tag::script::ScriptTagContent;
 use crate::util::tag::text::TextTagContent;
-use crate::util::tag::TagKind;
 use log::error;
 use serenity::all::{CreateEmbed, CreateMessage};
 
 pub async fn execute_tag(ctx: &mut CommandContext, tag_name: &str) {
     match fetch_tag_resolved(&tag_name, ctx.msg.guild_id.unwrap(), &ctx.state.db_pool).await {
         Err(e) => {
-            error!("Failed to get tag: {}", e);
-            send_reply_ping_text(
+            send_internal_error_msg(
                 ctx,
                 format!("Error when searching for tag: \"{}\"\n{}", tag_name, e).as_str(),
             )
@@ -138,14 +139,9 @@ async fn send_embed_reply(ctx: &CommandContext, embed: CreateEmbed) {
 }
 
 pub async fn payload_mismatch_error(ctx: &CommandContext, name: &str) {
-    error!("Tag {} payload kind does not match tag kind!", name);
-    send_reply_ping_text(
+    send_internal_error_msg(
         ctx,
-        format!(
-            "Error when evaluating tag **{}**. Please report error to <@435572469496020992>",
-            name
-        )
-        .as_str(),
+        format!("Error when evaluating tag **{}**.", name).as_str(),
     )
     .await;
 }
