@@ -67,25 +67,26 @@ pub async fn get_tag_editable_info(
     sqlx::query_as!(
         TagEditableInfo,
         r#"
-        SELECT
-            (t.owner_id = $2) AS "is_owner!",
-            EXISTS (
-                SELECT 1
-                FROM admins a
-                WHERE a.guild_id = $1
-                  AND a.member_id = $2
-            ) AS "is_admin!",
-            EXISTS (
-                SELECT 1
-                FROM bans b
-                WHERE b.guild_id = $1
-                  AND b.user_id = $2
-            ) AS "is_user_banned!",
-            t.enabled AS "tag_enabled!"
-        FROM tags t
-        WHERE t.guild_id = $1
-          AND t.name = $3
-        "#,
+    SELECT
+        (t.owner_id = $2) AS "is_owner!",
+        EXISTS (
+            SELECT 1
+            FROM admins a
+            WHERE a.guild_id = $1
+              AND a.member_id = $2
+              AND (a.permissions & 1) = 1
+        ) AS "is_admin!",
+        EXISTS (
+            SELECT 1
+            FROM bans b
+            WHERE b.guild_id = $1
+              AND b.user_id = $2
+        ) AS "is_user_banned!",
+        t.enabled AS "tag_enabled!"
+    FROM tags t
+    WHERE t.guild_id = $1
+      AND t.name = $3
+    "#,
         gid.db_id(),
         uid.db_id(),
         tag_name,

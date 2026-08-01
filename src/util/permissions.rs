@@ -1,6 +1,7 @@
 use crate::commands::CommandContext;
 use crate::db::permissions::admin_permissions;
 use serenity::all::Permissions;
+use std::env;
 
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,13 +63,10 @@ impl Permission {
     }
 }
 
-pub async fn get_admin_action_msg(
-    ctx: &CommandContext,
-    perm_required: Permission,
-) -> Option<String> {
+pub async fn is_discord_admin(ctx: &CommandContext) -> Result<bool, String> {
     let guild = match ctx.get_guild_id().to_guild_cached(&ctx.serenity_ctx.cache) {
         Some(guild) => guild.clone(),
-        None => return Some("Failed to get guild.".to_string()),
+        None => return Err("Failed to get guild.".to_string()),
     };
 
     let member = match guild
@@ -76,35 +74,59 @@ pub async fn get_admin_action_msg(
         .await
     {
         Ok(member) => member,
-        Err(e) => return Some(format!("Failed to get member: {:?}", e)),
+        Err(e) => return Err(format!("Failed to get member: {:?}", e)),
     };
+
+    if member.user.id.to_string() == env::var("OWNER_ID").expect("OWNER_ID must be set") {
+        return Ok(true);
+    }
 
     let channel = match ctx.msg.channel(&ctx.serenity_ctx.http).await {
         Ok(channel) => match channel.guild() {
             Some(channel) => channel,
-            None => return Some("Command was not run in a guild channel.".to_string()),
+            None => return Err("Command was not run in a guild channel.".to_string()),
         },
-        Err(e) => return Some(format!("Failed to get channel: {:?}", e)),
+        Err(e) => return Err(format!("Failed to get channel: {:?}", e)),
     };
 
     let permissions = guild.user_permissions_in(&channel, &member);
 
-    if !permissions.contains(Permissions::ADMINISTRATOR) {
-        return match admin_permissions(ctx.get_guild_id(), ctx.get_author_id(), &ctx.state.db_pool)
+    if permissions.contains(Permissions::ADMINISTRATOR) {
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+pub async fn get_admin_action_msg(
+    ctx: &CommandContext,
+    perm_required: Permission,
+) -> Option<String> {
+    match is_discord_admin(ctx).await {
+        Ok(true) => {
+            return None;
+        }
+        Ok(false) => {
+            return match admin_permissions(
+                ctx.get_guild_id(),
+                ctx.get_author_id(),
+                &ctx.state.db_pool,
+            )
             .await
-        {
-            Err(e) => Some(format!("Failed to retrieve admins status: {:?}", e)),
-            Ok(perms) => {
-                if perms.contains(&perm_required) {
-                    None
-                } else {
-                    Some(format!(
-                        "This command requires admin permissions ({}) to execute!",
-                        perm_required.name()
-                    ))
+            {
+                Err(e) => Some(format!("Failed to retrieve admins status: {:?}", e)),
+                Ok(perms) => {
+                    if perms.contains(&perm_required) {
+                        None
+                    } else {
+                        Some(format!(
+                            "This command requires admin permissions ({}) to execute!",
+                            perm_required.name()
+                        ))
+                    }
                 }
-            }
-        };
+            };
+        }
+        Err(e) => return Some(format!("{}", e)),
     }
     None
 }

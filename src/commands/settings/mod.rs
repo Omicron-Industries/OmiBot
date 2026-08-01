@@ -1,8 +1,8 @@
 mod prefix;
 
 use crate::commands::help::{command_help, command_usage};
-use crate::commands::{CommandCategory, CommandContext, CommandInfo, send_reply_ping_text};
-use crate::util::permissions::{Permission, get_admin_action_msg};
+use crate::commands::{send_reply_ping_text, CommandCategory, CommandContext, CommandInfo};
+use crate::util::permissions::{get_admin_action_msg, Permission};
 
 const SUBCOMMANDS: &'static [&'static CommandCategory] = &[&CommandCategory {
     name: None,
@@ -26,6 +26,7 @@ pub async fn dispatch(ctx: &mut CommandContext) {
     }
 
     let command = ctx.consume_arg();
+    println!("Command: {}", command.as_deref().unwrap_or("None"));
     match command.as_deref() {
         Some("help") => command_help(ctx, INFO).await,
         _ if ctx.help => command_help(ctx, INFO).await,
