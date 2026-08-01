@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE tags\n        SET\n            t_updated = CURRENT_TIMESTAMP,\n            detect = NOT detect\n        WHERE guild_id = $1\n          AND name = $2\n        RETURNING detect\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "detect",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "tags",
+            "name": "detect"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0b44cff44b599719db5f5c4f79238a2d509885c0fd61224e1f1e31449fee4642"
+}
