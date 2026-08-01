@@ -82,7 +82,8 @@ pub async fn execute(ctx: &mut CommandContext) {
                     payload.content.as_bytes().to_vec(),
                     format!("{}.txt", tag.name),
                 );
-                send_reply_ping_message(ctx, CreateMessage::new().add_file(attachment)).await;
+                let _ =
+                    send_reply_ping_message(ctx, CreateMessage::new().add_file(attachment)).await;
             }
             Script => {
                 let payload: ScriptTagContent = match serde_json::from_value(tag.payload) {
@@ -97,7 +98,8 @@ pub async fn execute(ctx: &mut CommandContext) {
                     payload.script.as_bytes().to_vec(),
                     format!("{}.js", tag.name),
                 );
-                send_reply_ping_message(ctx, CreateMessage::new().add_file(attachment)).await;
+                let _ =
+                    send_reply_ping_message(ctx, CreateMessage::new().add_file(attachment)).await;
             }
             Embed => {}
         },

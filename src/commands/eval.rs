@@ -76,14 +76,14 @@ pub async fn execute(ctx: &CommandContext) {
             ScriptOutput::Embed(embed_json) => {
                 let inner_json = embed_json.get("embed").unwrap_or(&embed_json);
                 if let Ok(js_embed) = serde_json::from_value::<JsEmbed>(inner_json.clone()) {
-                    send_reply_ping_message(
+                    let _ = send_reply_ping_message(
                         ctx,
                         CreateMessage::new().embed(CreateEmbed::from(js_embed)),
                     )
                     .await;
                 } else if let Ok(embed_data) = serde_json::from_value::<EmbedTagContent>(embed_json)
                 {
-                    send_reply_ping_message(
+                    let _ = send_reply_ping_message(
                         ctx,
                         CreateMessage::new().embed(CreateEmbed::from(embed_data.embed)),
                     )

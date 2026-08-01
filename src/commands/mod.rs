@@ -1,8 +1,5 @@
-use crate::settings::DEFAULT_PREFIX;
-// use crate::commands::eval::dispatch as other_dispatch;
 use crate::BotState;
 use log::error;
-use rquickjs::Ctx;
 use serenity::all::{Context, CreateAllowedMentions, CreateMessage, GuildId, Message, UserId};
 use std::sync::Arc;
 

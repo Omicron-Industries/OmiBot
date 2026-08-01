@@ -1,9 +1,6 @@
-use crate::db::DbId;
+use crate::util::tag::CreateTagModel;
 use crate::util::tag::TagKind;
-use crate::util::tag::{CreateTagModel, FetchTagModel};
 use log::error;
-use serenity::all::GuildId;
-use sqlx::error::DatabaseError;
 use sqlx::{Error, PgPool};
 
 pub enum CreateTagError {

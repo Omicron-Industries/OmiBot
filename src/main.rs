@@ -1,16 +1,16 @@
-use log::{error, info, logger};
+use log::{error, info};
 use omibot::cache::GuildCache;
 use omibot::commands::CommandContext;
 use omibot::db::tags::detect::get_detectable_tags;
-use omibot::settings::{GuildSettings, DEFAULT_PREFIX};
+use omibot::settings::GuildSettings;
 use omibot::util::tag::execute::execute_tag;
 use omibot::{commands, BotState};
-use serenity::all::{CreateAllowedMentions, CreateEmbed, CreateMessage, GuildId};
+use serenity::all::GuildId;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{query, query_as, Pool, Postgres, QueryBuilder};
+use sqlx::{query, query_as, Postgres, QueryBuilder};
 use std::env;
 use std::sync::Arc;
 

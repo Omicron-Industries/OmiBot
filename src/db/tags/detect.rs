@@ -26,7 +26,7 @@ pub async fn toggle_detectable(
     .await?;
 
     if row.detect {
-        add_detectable_to_cache(state, gid, tag_name);
+        let _ = add_detectable_to_cache(state, gid, tag_name);
     } else {
         if let Some(mut tags) = state.guild_cache.detectable_tags.get(&gid).await {
             tags.retain(|t| t != tag_name);

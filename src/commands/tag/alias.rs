@@ -3,8 +3,6 @@ use crate::commands::tag::tag_name_validator;
 use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::fetch::fetch_tag;
 use crate::util::tag::alias::AliasTagContent;
-use crate::util::tag::script::ScriptTagContent;
-use crate::util::tag::text::TextTagContent;
 use crate::util::tag::{try_create_tag, CreateTagModel, TagPayload};
 use log::error;
 

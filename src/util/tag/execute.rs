@@ -54,7 +54,7 @@ pub async fn execute_tag(ctx: &mut CommandContext, tag_name: &str) {
                     }
                 };
 
-                send_reply_ping_message(
+                let _ = send_reply_ping_message(
                     ctx,
                     CreateMessage::new().embed(CreateEmbed::from(payload.embed)),
                 )

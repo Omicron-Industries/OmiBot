@@ -1,5 +1,5 @@
 use crate::commands::help::command_help;
-use crate::commands::{CommandContext, CommandInfo, send_reply_ping_text};
+use crate::commands::{send_reply_ping_text, CommandContext, CommandInfo};
 use crate::db::tags::bans::list_banned_users;
 
 pub const INFO: &'static CommandInfo = &CommandInfo {
